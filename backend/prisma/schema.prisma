@@ -1,0 +1,201 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  PATIENT
+  HOSPITAL
+  DOCTOR
+  ADMIN
+}
+enum Gender {
+  MALE
+  FEMALE
+  OTHERS
+}
+enum Severity {
+  LOW
+  MEDIUM
+  HIGH
+  EMERGENCY
+}
+enum AppointmentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+  CANCELLED
+}
+enum DoctorStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum HospitalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+model User {
+  id String @id @default(cuid())
+  email String @unique
+  password String? 
+  role Role? 
+  google_id String?
+  one_time_code String?
+  one_time_code_expires DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  patient Patient?
+  doctor Doctor?
+  admin Admin?
+  hospital Hospital?
+}
+
+model refresh_token {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  user_id   String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+model Patient {
+  id String @id @default(cuid())
+  user_id String @unique
+  user User @relation(fields: [user_id], references: [id])
+  first_name String
+  last_name String
+  date_of_birth DateTime
+  gender Gender
+  phone String?
+  language String @default("English")
+  blood_group String?
+  allergies String[]
+  medications String[]
+  conditions  String[]
+
+  healthHistory HealthRecord[]
+  appointments  Appointment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+model Doctor {
+  id  String @id @default(cuid())
+  user_id  String @unique
+  user   User  @relation(fields: [user_id], references: [id])
+  first_name  String
+  last_name   String
+  phone     String
+  gender   Gender
+  specialization  String
+  yearsExperience Int
+  location   String
+  hospital_id String?
+  hospital Hospital? @relation(fields: [hospital_id], references: [id])
+  bio       String?
+  rating   Float @default(0)
+  totalRatings  Int  @default(0)
+  available   Boolean @default(true)
+  status    DoctorStatus @default(PENDING)
+  licenseNumber   String
+  credentials     String[]
+  
+  appointments Appointment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+model Hospital {
+  id      String @id @default(cuid())
+  user_id  String @unique
+  user    User   @relation(fields: [user_id], references: [id])
+  name    String
+  email   String
+  phone   String
+  address String
+  state   String
+  country String @default("Nigeria")
+  bio     String?
+  website String?
+  status   HospitalStatus @default(PENDING)
+  license_number String
+  credentials  String[]
+  rating   Float @default(0)
+  total_ratings Int @default(0)
+  verified  Boolean @default(false)
+
+  doctors      Doctor[]
+  appointments Appointment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Admin {
+  id  String @id @default(cuid())
+  user_id  String @unique
+  user  User @relation(fields: [user_id], references: [id])
+  first_name String
+  last_name  String
+  createdAt DateTime @default(now())
+}
+
+model HealthRecord {
+  id String  @id @default(cuid())
+  patient_id  String
+  patient Patient  @relation(fields: [patient_id], references: [id])
+  symptoms  String[]
+  rawInput  String
+  detected_language String @default("english")
+  diagnosis  String
+  severity Severity
+  explanation  String
+  immediateAdvice  String
+  warningSignss String[]
+  aiSource    String
+  fullResult  Json
+
+  createdAt DateTime @default(now())
+}
+
+model Appointment {
+  id  String  @id @default(cuid())
+  patient_id  String
+  patient   Patient  @relation(fields: [patient_id], references: [id])
+  doctor_id  String
+  doctor  Doctor   @relation(fields: [doctor_id], references: [id])
+  hospital_id String?
+  hospital Hospital?  @relation(fields: [hospital_id], references: [id])
+  status  AppointmentStatus @default(PENDING)
+  scheduledAt  DateTime?
+  reason    String
+  patient_brief String?
+  notes   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Notification {
+  id   String @id @default(cuid())
+  user_id String
+  title  String
+  message  String
+  read    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
