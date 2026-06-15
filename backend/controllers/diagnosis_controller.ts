@@ -7,18 +7,18 @@ import {
   get_specialization,
   SYSTEM_PROMPT,
 } from "../config/diagnosis_helpers.ts";
-//initialize gemini
+
+// initialize gemini
 const genai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 const gemini = genai.getGenerativeModel({ model: "gemini-pro" });
 
-//system prompt
-//inistructions to gemini ai
-
-//store conversation per patient
-//key = patient_id, value =message.history
+// store conversation per patient
+// key = patient_id, value = message history
 const conversation: Record<string, any[]> = {};
 
-//chat endpoint
+// ============================================
+// CHAT ENDPOINT — agent loop
+// ============================================
 export const chat = async (req: Request, res: Response) => {
   try {
     const patient_id = req.user?.id;
@@ -31,13 +31,14 @@ export const chat = async (req: Request, res: Response) => {
       });
     }
 
-    //get or create conversation history for this patient
+    // get or create conversation history for this patient
     if (!conversation[patient_id!]) {
       conversation[patient_id!] = [];
     }
     const history = conversation[patient_id!];
 
-    //build chat with history
+    // build chat with full history
+    // this is how gemini remembers the conversation
     const chat_session = gemini.startChat({
       history: [
         { role: "user", parts: [{ text: SYSTEM_PROMPT }] },
@@ -50,28 +51,29 @@ export const chat = async (req: Request, res: Response) => {
       ],
     });
 
+    // add patient message to history
     history.push({
       role: "user",
       parts: [{ text: message }],
     });
 
-    //send to gemini
+    // send to gemini
     const result = await chat_session.sendMessage(message);
     const gemini_reply = result.response.text();
 
-    //check if  gemini have collected enough symptoms
+    // check if gemini has collected enough symptoms
     if (gemini_reply.includes("DIAGNOSIS_READY")) {
       return await run_diagnosis(patient_id!, gemini_reply, res);
     }
 
-    //if gemini is still asking questions add its reply to history
-    // so that  the next message has context
+    // gemini is still asking questions
+    // add its reply to history so next message has context
     history.push({
       role: "model",
       parts: [{ text: gemini_reply }],
     });
 
-    //send question back to patient
+    // send question back to patient
     return res.status(200).json({
       success: true,
       type: "question",
@@ -85,21 +87,24 @@ export const chat = async (req: Request, res: Response) => {
   }
 };
 
+// ============================================
+// RUN DIAGNOSIS — called when gemini is done
+// ============================================
 export const run_diagnosis = async (
   patient_id: string,
   gemini_reply: string,
   res: Response,
 ) => {
   try {
-    //extract json gemini returned
+    // extract the JSON gemini returned
     const json_start = gemini_reply.indexOf("{");
-    const json_end = gemini_reply.indexOf("}");
+    const json_end = gemini_reply.lastIndexOf("}") + 1; // ← fixed: lastIndexOf + 1
     const json_string = gemini_reply.slice(json_start, json_end);
     const { symptoms, duration, severity } = JSON.parse(json_string);
 
-    //send symptoms to tensflow model
+    // send symptoms to tensorflow model
     const tf_results = predict_disease(symptoms);
-    // tf_results looks like this [
+    // tf_results = [
     //   { disease: "Pneumonia", confidence: 0.87, percentage: "87.0%", ... },
     //   { disease: "Bronchitis", confidence: 0.09, ... },
     //   { disease: "COVID-19", confidence: 0.02, ... },
@@ -107,10 +112,9 @@ export const run_diagnosis = async (
 
     const top = tf_results[0];
 
-    //send diagnois back to gemini fr explanation
-
+    // send diagnosis back to gemini for explanation
     const explanation_prompt = `
-    A patient in Nigeria described these symptoms: ${symptoms.join(", ")}
+      A patient in Nigeria described these symptoms: ${symptoms.join(", ")}
       Duration: ${duration}
       Severity: ${severity}
       
@@ -129,7 +133,7 @@ export const run_diagnosis = async (
     const explanation_result = await gemini.generateContent(explanation_prompt);
     const explanation = explanation_result.response.text();
 
-    //find matching doctors from DB
+    // find matching doctors from DB
     const specialization = get_specialization(top.disease);
 
     const doctors = await prisma.doctor.findMany({
@@ -162,6 +166,7 @@ export const run_diagnosis = async (
       take: 3,
     });
 
+    // save to DB
     await prisma.healthRecord.create({
       data: {
         patient_id,
@@ -176,6 +181,9 @@ export const run_diagnosis = async (
         fullResult: tf_results as any,
       },
     });
+
+    // clear conversation — session is done ← fixed: was missing
+    delete conversation[patient_id];
 
     return res.status(200).json({
       success: true,

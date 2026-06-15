@@ -1,7 +1,7 @@
 // controllers/doctor_controller.ts
 import { Request, Response } from "express";
-import prisma from "../src/db";
-import { find_patient } from "../services/patient_service";
+import prisma from "../src/db.ts";
+import { find_patient } from "../services/patient_service.ts";
 
 export const get_doctor_profile = async (req: Request, res: Response) => {
   try {

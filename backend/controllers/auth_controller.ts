@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import prisma from "../src/db.ts";
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
+import { Resend } from "resend";
 
 export const log_in = async (req: Request, res: Response) => {
   try {
@@ -605,6 +606,106 @@ export const refresh_token = async (req: Request, res: Response) => {
     return res.status(500).json({
       success: false,
       message: "something went wrong",
+    });
+  }
+};
+
+export const forgot_password = async (req: Request, res: Response) => {
+  const { email } = req.body;
+  try {
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      return res.status(404).json({
+        success: fail,
+        message: "email not found",
+      });
+    }
+
+    const raw_token = crypto.randomBytes(32).toString("hex");
+    const hashed_token = crypto
+      .createHash("sha256")
+      .update(raw_token)
+      .digest("hex");
+
+    await prisma.user.update({
+      where: { email },
+      data: {
+        one_time_code: hashed_token,
+        one_time_code_expires: new Date(Date.now() + 30 * 60 * 1000),
+      },
+    });
+
+    const reset_url = `${
+      process.env.CLIENT_URL
+    }/auth/reset_password?token=${raw_token}&email=${encodeURIComponent(email)}`;
+
+    const resend: any = new Resend(process.env.RESEND_API_KEY);
+
+    const { error: email_error } = await resend.emails.send({
+      from: "Health Mate",
+      to: email,
+      subject: "reset password",
+      html: `<div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+          <h2 style="color: #15803d;">Reset your password</h2>
+          <p>You requested a password reset for your Health mate account.</p>
+          <p>Click the button below — the link expires in <strong>30 minutes</strong>.</p>
+          <a href="${reset_url}"
+            style="display:inline-block;margin:16px 0;padding:12px 24px;background:#15803d;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;">
+            Reset password
+          </a>
+          <p style="color:#6b7280;font-size:13px;">
+            If you didn't request this, you can safely ignore this email.
+          </p>
+          <p style="color:#6b7280;font-size:12px;">
+            Or copy this link: ${reset_url}
+          </p>
+        </div>`,
+    });
+    return res
+      .status(200)
+      .json({ success: true, message: "reset sent to email" });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: `something went wrong ${error}`,
+    });
+  }
+};
+
+export const reset_token = async (req: Request, res: Response) => {
+  const { token, email, password } = req.body;
+  try {
+    const user = await prisma.user.findUnique({ where: { email } });
+
+    const hashed_token = crypto
+      .createHash("sha256")
+      .update(token)
+      .digest("hex");
+    if (user?.one_time_code == hashed_token) {
+      if (Number(Date.now()) > Number(user.one_time_code_expires)) {
+        return res.status(304).json({
+          success: false,
+          message: "token expired request for another",
+        });
+      }
+      const new_hashed_password = await bcrypt.hash(password, 10);
+
+      await prisma.user.update({
+        where: { email },
+        data: {
+          password: new_hashed_password,
+          one_time_code: null,
+        },
+      });
+      return res.status(200).json({
+        success: true,
+        message: "successfully changed password",
+      });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: `something went wrong ${error}`,
     });
   }
 };

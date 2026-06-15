@@ -1,5 +1,5 @@
 import bcrypt from "bcrypt";
-import prisma from "../src/db";
+import prisma from "../src/db.ts";
 import { create } from "domain";
 
 async function main() {

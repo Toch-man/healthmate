@@ -60,6 +60,7 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+
   patient Patient?
   doctor Doctor?
   admin Admin?
@@ -185,7 +186,7 @@ model Appointment {
   scheduledAt  DateTime?
   reason    String
   patient_brief String?
-  notes   String?
+  
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

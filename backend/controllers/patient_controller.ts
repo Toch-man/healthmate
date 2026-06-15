@@ -1,6 +1,6 @@
-import prisma from "../src/db";
+import prisma from "../src/db.ts";
 import { Request, Response } from "express";
-import { find_patient } from "../services/patient_service";
+import { find_patient } from "../services/patient_service.ts";
 
 export const patient_profile = async (req: Request, res: Response) => {
   try {

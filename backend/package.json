@@ -5,7 +5,10 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "train": "node --loader ts-node/esm ml/train.ts",
+    "preprocess": "node --loader ts-node/esm ml/preprocess.ts",
+    "dev": "node --loader ts-node/esm src/index.ts",
+    "test": "jest"
   },
   "author": "",
   "license": "ISC",
