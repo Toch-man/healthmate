@@ -1,6 +1,6 @@
 import express from "express";
-import { authenticate, role_allowed } from "../middleware/auth_middleware";
-import * as doctor_controller from "../controllers/doctor_controller";
+import { authenticate, role_allowed } from "../middleware/auth_middleware.ts";
+import * as doctor_controller from "../controllers/doctor_controller.ts";
 const router = express.Router();
 
 router.get(
