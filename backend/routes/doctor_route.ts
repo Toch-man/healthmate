@@ -22,3 +22,5 @@ router.post(
   role_allowed("DOCTOR"),
   doctor_controller.update_doctor_profile,
 );
+
+export default router;

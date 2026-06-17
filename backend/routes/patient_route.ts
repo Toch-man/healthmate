@@ -10,3 +10,5 @@ router.get(
   role_allowed("PATIENT"),
   patient_controller.patient_profile,
 );
+
+export default router;

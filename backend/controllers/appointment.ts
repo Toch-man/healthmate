@@ -102,11 +102,11 @@ export const book_appointment = async (req: Request, res: Response) => {
 };
 
 export const get_patient_appointment = async (req: Request, res: Response) => {
-  const patient_id = req.user?.id;
+  const patient_id: string = req.user!.id;
 
   try {
     const patient = await prisma.patient.findUnique({
-      where: { user_id: patient_id },
+      where: { id: patient_id },
     });
 
     if (!patient) {
@@ -243,43 +243,29 @@ export const appointment_status = async (req: Request, res: Response) => {
       });
     }
 
-    try {
-      if (status == "1") {
-        await prisma.appointment.update({
-          where: { id: id },
-          data: {
-            status: "APPROVED",
-          },
-        });
-      } else if (status == 2) {
-        await prisma.appointment.update({
-          where: { id: id },
-          data: { status: "REJECTED" },
-        });
-      } else if (status == 3) {
-        await prisma.appointment.update({
-          where: { id: id },
-          data: { status: "COMPLETED" },
-        });
-      } else if (status == 4) {
-        await prisma.appointment.update({
-          where: { id: id },
-          data: {
-            status: "CANCELLED",
-          },
-        });
-      }
-      return res.status(200).json({
-        success: true,
-        message: "status update successful",
-      });
-    } catch (error) {
-      return res.status(400).json({
+    if (!status) {
+      return res.status(401).json({
         success: false,
-        message: `$error`,
+        message: `status not provided`,
       });
     }
-  } catch (error) {}
+    await prisma.appointment.update({
+      where: { id: id },
+      data: {
+        status: status,
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "status update successful",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: `something went wrong ${error}`,
+    });
+  }
 };
 
 //doctor get appointment

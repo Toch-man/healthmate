@@ -4,7 +4,7 @@ import {
   Profile,
   VerifyCallback,
 } from "passport-google-oauth20";
-import prisma from "../src/db.js";
+import prisma from "../src/db.ts";
 
 passport.use(
   new GoogleStrategy(

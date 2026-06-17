@@ -5,3 +5,5 @@ import express from "express";
 
 const router = express.Router();
 router.post("/diagnosis/chat", authenticate, role_allowed("PATIENT"), chat);
+
+export default router;

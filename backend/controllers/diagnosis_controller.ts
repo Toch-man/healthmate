@@ -16,9 +16,7 @@ const gemini = genai.getGenerativeModel({ model: "gemini-pro" });
 // key = patient_id, value = message history
 const conversation: Record<string, any[]> = {};
 
-// ============================================
 // CHAT ENDPOINT — agent loop
-// ============================================
 export const chat = async (req: Request, res: Response) => {
   try {
     const patient_id = req.user?.id;
@@ -87,9 +85,8 @@ export const chat = async (req: Request, res: Response) => {
   }
 };
 
-// ============================================
 // RUN DIAGNOSIS — called when gemini is done
-// ============================================
+
 export const run_diagnosis = async (
   patient_id: string,
   gemini_reply: string,

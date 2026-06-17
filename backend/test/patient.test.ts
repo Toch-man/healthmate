@@ -5,19 +5,16 @@ import request from "supertest";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
-describe("Diagnosis Routes", () => {
+describe("Patient Routes", () => {
   let patientCookie: string;
   let doctorCookie: string;
   let patientUserId: string;
 
-  const patientEmail = `diag_test_patient_${Date.now()}@gmail.com`;
-  const doctorEmail = `diag_test_doctor_${Date.now()}@gmail.com`;
+  const patientEmail = `patient_test_user_${Date.now()}@gmail.com`;
+  const doctorEmail = `patient_test_doctor_${Date.now()}@gmail.com`;
 
   beforeAll(async () => {
     // Clean up
-    await prisma.healthRecord.deleteMany({
-      where: { patient: { user: { email: patientEmail } } },
-    });
     await prisma.patient.deleteMany({
       where: { user: { email: patientEmail } },
     });
@@ -37,11 +34,11 @@ describe("Diagnosis Routes", () => {
         role: "PATIENT",
         patient: {
           create: {
-            first_name: "DiagPatient",
+            first_name: "Patient",
             last_name: "Test",
             date_of_birth: new Date("2000-01-01"),
             gender: "MALE",
-            phone: "09059395210",
+            phone: "09059395180",
           },
         },
       },
@@ -64,14 +61,14 @@ describe("Diagnosis Routes", () => {
         role: "DOCTOR",
         doctor: {
           create: {
-            first_name: "DiagDoctor",
+            first_name: "Doctor",
             last_name: "Test",
-            phone: "09059395211",
-            gender: "FEMALE",
+            phone: "09059395181",
+            gender: "MALE",
             specialization: "General",
             yearsExperience: 5,
             location: "Lagos",
-            licenseNumber: "DIAGDOC001",
+            licenseNumber: "DOC54321",
             status: "APPROVED",
           },
         },
@@ -87,9 +84,6 @@ describe("Diagnosis Routes", () => {
   });
 
   afterAll(async () => {
-    await prisma.healthRecord.deleteMany({
-      where: { patient: { user: { email: patientEmail } } },
-    });
     await prisma.patient.deleteMany({
       where: { user: { email: patientEmail } },
     });
@@ -102,58 +96,33 @@ describe("Diagnosis Routes", () => {
     await prisma.$disconnect();
   });
 
-  // ==================== DIAGNOSIS CHAT ====================
-  describe("POST /api/diagnosis/chat", () => {
-    test("should fail without message body", async () => {
+  // ==================== GET PATIENT PROFILE ====================
+  describe("GET /api/patient/patient-profile", () => {
+    test("should get patient profile when authenticated as patient", async () => {
       const res = await request(app)
-        .post("/api/diagnosis/chat")
-        .set("Cookie", patientCookie)
-        .send({});
+        .get("/api/patient/patient-profile")
+        .set("Cookie", patientCookie);
 
-      expect(res.statusCode).toBe(400);
-      expect(res.body.success).toBe(false);
-      expect(res.body.message).toContain("message is required");
+      expect(res.statusCode).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data).toHaveProperty("first_name", "Patient");
+      expect(res.body.data).toHaveProperty("last_name", "Test");
     });
 
     test("should fail without authentication", async () => {
-      const res = await request(app)
-        .post("/api/diagnosis/chat")
-        .send({ message: "I have a headache" });
+      const res = await request(app).get("/api/patient/patient-profile");
 
       expect(res.statusCode).toBe(401);
       expect(res.body.success).toBe(false);
     });
 
-    test("should fail for non-patient role", async () => {
+    test("should fail for non-patient role (doctor)", async () => {
       const res = await request(app)
-        .post("/api/diagnosis/chat")
-        .set("Cookie", doctorCookie)
-        .send({ message: "I have a headache" });
+        .get("/api/patient/patient-profile")
+        .set("Cookie", doctorCookie);
 
       expect(res.statusCode).toBe(403);
       expect(res.body.success).toBe(false);
-    });
-
-    test("should send a message and get a response from the chat system", async () => {
-      const res = await request(app)
-        .post("/api/diagnosis/chat")
-        .set("Cookie", patientCookie)
-        .send({ message: "Hello, I have a headache and fever" });
-
-      // Should either get a question back or a diagnosis, or an error
-      // The important thing is that the endpoint responds
-      expect([200, 500]).toContain(res.statusCode);
-
-      if (res.statusCode === 200) {
-        expect(res.body.success).toBe(true);
-        // Could be a question or a diagnosis
-        if (res.body.type === "question") {
-          expect(res.body.message).toBeDefined();
-        } else if (res.body.type === "diagnosis") {
-          expect(res.body.explanation).toBeDefined();
-          expect(res.body.diagnosis).toBeDefined();
-        }
-      }
     });
   });
 });
