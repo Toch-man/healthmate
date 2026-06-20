@@ -7,7 +7,8 @@
   "scripts": {
     "train": "node --loader ts-node/esm ml/train.ts",
     "preprocess": "node --loader ts-node/esm ml/preprocess.ts",
-    "dev": "node --loader ts-node/esm src/index.ts",
+    "dev": "node --loader ts-node/esm src/server.ts",
+    "start": "node --loader ts-node/esm src/server.ts",
     "test": "jest"
   },
   "author": "",
@@ -58,6 +59,7 @@
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
     "pg": "^8.21.0",
-    "redis": "^6.0.0"
+    "redis": "^6.0.0",
+    "socket.io": "^4.8.3"
   }
 }

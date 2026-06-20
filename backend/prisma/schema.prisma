@@ -200,3 +200,12 @@ model Notification {
   read    Boolean  @default(false)
   createdAt DateTime @default(now())
 }
+
+model Message {
+  id             String      @id @default(cuid())
+  appointment_id String
+  sender_id      String
+  content        String
+  read           Boolean     @default(false)
+  createdAt      DateTime    @default(now())
+}
