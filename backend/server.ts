@@ -1,4 +1,16 @@
-import express from "express";
+import "dotenv/config";
+
+// catch any crash and print the real error
+process.on("uncaughtException", (err) => {
+  console.error("Uncaught exception:", err);
+  process.exit(1);
+});
+
+process.on("unhandledRejection", (reason) => {
+  console.error("Unhandled rejection:", reason);
+  process.exit(1);
+});
+
 import { createServer } from "http";
 import { init_socket } from "./src/socket.ts";
 import app from "./app.ts";
@@ -6,10 +18,7 @@ import { load_model } from "./ml/predict.ts";
 
 const http_server = createServer(app);
 
-// attach socket.io to the http server
 init_socket(http_server);
-
-// load TF model
 load_model();
 
 const PORT = process.env.PORT || 5000;
