@@ -5,10 +5,10 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "train": "node --loader ts-node/esm ml/train.ts",
-    "preprocess": "node --loader ts-node/esm ml/preprocess.ts",
-    "dev": "node --loader ts-node/esm server.ts",
-    "start": "node --loader ts-node/esm server.ts",
+    "dev": "tsx watch server.ts",
+    "start": "tsx server.ts",
+    "train": "tsx ml/train.ts",
+    "preprocess": "tsx ml/preprocess.ts",
     "test": "jest"
   },
   "author": "",
@@ -39,7 +39,8 @@
     "prisma": "^7.8.0",
     "supertest": "^7.2.2",
     "ts-jest": "^29.4.11",
-    "ts-node": "^10.9.2"
+    "ts-node": "^10.9.2",
+    "tsx": "^4.22.4"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
