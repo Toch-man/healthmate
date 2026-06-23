@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch server.ts",
+    "build": "prisma generate",
     "start": "tsx server.ts",
     "train": "tsx ml/train.ts",
     "preprocess": "tsx ml/preprocess.ts",
