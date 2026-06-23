@@ -7,8 +7,8 @@
   "scripts": {
     "train": "node --loader ts-node/esm ml/train.ts",
     "preprocess": "node --loader ts-node/esm ml/preprocess.ts",
-    "dev": "node --loader ts-node/esm src/server.ts",
-    "start": "node --loader ts-node/esm src/server.ts",
+    "dev": "node --loader ts-node/esm server.ts",
+    "start": "node --loader ts-node/esm server.ts",
     "test": "jest"
   },
   "author": "",
