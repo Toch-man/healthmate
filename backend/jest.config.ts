@@ -13,7 +13,7 @@ const config: Config = {
         useESM: true,
         tsconfig: "tsconfig.json",
         diagnostics: {
-          ignoreCodes: [151002], // ← silences the hybrid module warning
+          ignoreCodes: [151002],
         },
       },
     ],
@@ -21,7 +21,6 @@ const config: Config = {
   moduleNameMapper: {
     "^(\\.{1,2}/.*)\\.js$": "$1",
   },
-  setupFiles: ["<rootDir>/test/setup.ts"], // ← this is what was missing
   testTimeout: 30000,
   verbose: true,
   forceExit: true,
