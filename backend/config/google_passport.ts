@@ -1,9 +1,6 @@
 import passport from "passport";
-import {
-  Strategy as GoogleStrategy,
-  Profile,
-  VerifyCallback,
-} from "passport-google-oauth20";
+import { Strategy as GoogleStrategy } from "passport-google-oauth20";
+import type { Profile, VerifyCallback } from "passport-google-oauth20";
 import prisma from "../src/db.ts";
 
 passport.use(
