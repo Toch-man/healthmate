@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/app/context/auth_context";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -10,6 +11,7 @@ export default function ResetPasswordPage() {
   const [show, set_show] = useState({ password: false, confirm: false });
   const [form, set_form] = useState({ password: "", confirm: "" });
   const [error, set_error] = useState("");
+  const { auth_fetch } = useAuth();
 
   const handle_submit = async () => {
     set_error("");
@@ -31,11 +33,10 @@ export default function ResetPasswordPage() {
     const token = params.get("token");
 
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/auth/reset-password`,
+      const res = await auth_fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/auth/reset_password`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ token, password: form.password }),
         },
       );
@@ -43,7 +44,7 @@ export default function ResetPasswordPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        set_error(data.message || "Link expired. Please request a new one.");
+        set_error(data.message);
         return;
       }
 

@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/app/context/auth_context";
 
 interface Message {
   id: string;
@@ -22,6 +23,7 @@ interface DiagnosisResult {
 
 export default function SymptomCheckPage() {
   const router = useRouter();
+  const { auth_fetch } = useAuth();
   const [messages, set_messages] = useState<Message[]>([
     {
       id: "1",
@@ -55,12 +57,11 @@ export default function SymptomCheckPage() {
     set_loading(true);
 
     try {
-      const res = await fetch(
+      const res = await auth_fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/diagnosis/analyze`,
         {
           method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
+
           body: JSON.stringify({ raw_input: input }),
         },
       );

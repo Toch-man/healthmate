@@ -168,32 +168,25 @@ export const set_role = async (req: Request, res: Response) => {
   try {
     const { role } = req.body;
 
-    // get temp token from header
-    const temp_token = req.headers.authorization?.split(" ")[1];
-    if (!temp_token) {
-      return res.status(401).json({
-        success: false,
-        message: "no token provided",
-      });
+    // ← use authenticate middleware instead of temp_token
+    // req.user is set by authenticate middleware
+    const user_id = (req.user as any).id;
+
+    const allowed_roles = ["PATIENT", "DOCTOR", "HOSPITAL"];
+    if (!allowed_roles.includes(role)) {
+      return res.status(403).json({ success: false, message: "invalid role" });
     }
 
-    // verify temp token
-    const decoded = jwt.verify(temp_token, process.env.JWT_SECRET!) as {
-      user_id: string;
-      needs_role: boolean;
-    };
-
-    if (!decoded.needs_role) {
-      return res.status(400).json({
-        success: false,
-        message: "role already set",
-      });
+    const existing = await prisma.user.findUnique({ where: { id: user_id } });
+    if (existing?.role) {
+      return res
+        .status(400)
+        .json({ success: false, message: "role already set" });
     }
 
-    // update user role
     const user = await prisma.user.update({
-      where: { id: decoded.user_id },
-      data: { role: role },
+      where: { id: user_id },
+      data: { role },
     });
 
     // create profile based on role
@@ -226,7 +219,7 @@ export const set_role = async (req: Request, res: Response) => {
         data: {
           user_id: user.id,
           name: "",
-          email: user.email,
+          email: user.email!,
           phone: "",
           address: "",
           state: "",
@@ -235,58 +228,15 @@ export const set_role = async (req: Request, res: Response) => {
       });
     }
 
-    // generate real tokens now
-    const access_token = jwt.sign(
-      { user_id: user.id, role: user.role },
-      process.env.JWT_ACCESS_SECRET!,
-      { expiresIn: "15m" },
-    );
-
-    const refresh_token = jwt.sign(
-      { user_id: user.id },
-      process.env.JWT_REFRESH_SECRET!,
-      { expiresIn: "7d" },
-    );
-
-    // save refresh token to DB
-    await prisma.refresh_token.create({
-      data: {
-        token: refresh_token,
-        user_id: user.id,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      },
-    });
-
-    // send cookies
-    res.cookie("access_token", access_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 1000 * 60 * 15,
-    });
-
-    res.cookie("refresh_token", refresh_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 1000 * 60 * 60 * 24 * 7,
-    });
-
     return res.status(200).json({
       success: true,
       message: "role set successfully",
-      user: {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-      },
+      user: { id: user.id, email: user.email, role: user.role },
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "something went wrong",
-      error,
-    });
+    return res
+      .status(500)
+      .json({ success: false, message: "something went wrong", error });
   }
 };
 
@@ -706,6 +656,79 @@ export const reset_token = async (req: Request, res: Response) => {
     return res.status(500).json({
       success: false,
       message: `something went wrong ${error}`,
+    });
+  }
+};
+
+export const logout = async (req: Request, res: Response) => {
+  try {
+    const token = req.cookies.refresh_token;
+
+    // delete from DB — immediately invalidates it
+    if (token) {
+      await prisma.refresh_token.deleteMany({
+        where: { token },
+      });
+    }
+
+    // clear both cookies
+    res.clearCookie("access_token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+    });
+
+    res.clearCookie("refresh_token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "logged out successfully",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "something went wrong",
+      error,
+    });
+  }
+};
+export const me = async (req: Request, res: Response) => {
+  const user = req.user as any;
+
+  try {
+    const me = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        createdAt: true,
+        patient: { select: { first_name: true, last_name: true } },
+        doctor: { select: { first_name: true, last_name: true, status: true } },
+        hospital: { select: { name: true, status: true } },
+      },
+    });
+
+    if (!me) {
+      return res.status(404).json({
+        success: false,
+        message: "user doesnt exist",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      user: me, // ← was missing!
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "something went wrong",
+      error,
     });
   }
 };

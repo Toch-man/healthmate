@@ -270,44 +270,31 @@ export const appointment_status = async (req: Request, res: Response) => {
 
 //doctor get appointment
 export const get_doctor_appointment = async (req: Request, res: Response) => {
-  const doctor_id = req.params.doctor_id as string;
-
   try {
-    const doctor_appointment = await prisma.appointment.findMany({
-      where: { doctor_id: doctor_id },
+    const doctor = await prisma.doctor.findUnique({
+      where: { user_id: req.user!.id },
+    });
+
+    if (!doctor) {
+      return res
+        .status(404)
+        .json({ success: false, message: "doctor not found" });
+    }
+
+    const appointments = await prisma.appointment.findMany({
+      where: { doctor_id: doctor.id },
       include: {
-        doctor: {
-          select: {
-            id: true,
-            first_name: true,
-            last_name: true,
-            specialization: true,
-            location: true,
-            rating: true,
-          },
-        },
-        hospital: {
-          select: {
-            id: true,
-            name: true,
-            address: true,
-            state: true,
-          },
-        },
+        patient: { select: { first_name: true, last_name: true } },
+        hospital: { select: { name: true, address: true, state: true } },
       },
       orderBy: { createdAt: "desc" },
     });
 
-    return res.status(200).json({
-      success: true,
-      message: "doctors appointment successfully  fetched",
-      doctor_appointment,
-    });
+    return res.status(200).json({ success: true, data: appointments });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: `something went wrong ${error}`,
-    });
+    return res
+      .status(500)
+      .json({ success: false, message: "something went wrong", error });
   }
 };
 

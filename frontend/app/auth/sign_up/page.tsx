@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
-
+import { useAuth } from "@/app/context/auth_context";
 type Role = "PATIENT" | "DOCTOR" | "HOSPITAL";
 
 export default function SignupPage() {
+  const { auth_fetch } = useAuth();
   const [role, set_role] = useState<Role>("PATIENT");
   const [loading, set_loading] = useState(false);
   const [show_password, set_show_password] = useState(false);
@@ -37,18 +38,21 @@ export default function SignupPage() {
     set_loading(true);
     const endpoint =
       role === "PATIENT"
-        ? "/api/auth/signup/patient"
+        ? "/api/auth/patient_signup"
         : role === "DOCTOR"
-          ? "/api/auth/signup/doctor"
-          : "/api/auth/signup/hospital";
+          ? "/api/auth/doctor_signup"
+          : "/api/auth/hospital_signup";
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, role }),
-      });
+      const res = await auth_fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}${endpoint}`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...form, role }),
+        },
+      );
       const data = await res.json();
       if (!res.ok) {
         alert(data.message);

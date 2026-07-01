@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/app/context/auth_context";
 
 interface Hospital {
   id: string;
@@ -20,6 +21,7 @@ interface Hospital {
 
 export default function AdminHospitalsPage() {
   const router = useRouter();
+  const { auth_fetch } = useAuth();
   const [hospitals, set_hospitals] = useState<Hospital[]>([]);
   const [loading, set_loading] = useState(true);
   const [filter, set_filter] = useState("ALL");
@@ -29,18 +31,14 @@ export default function AdminHospitalsPage() {
   useEffect(() => {
     const fetch_hospitals = async () => {
       try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/admin/hospitals/pending`,
-          { credentials: "include" },
+        const res = await auth_fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/admin/pending_hospitals`,
         );
-        if (res.status === 401 || res.status === 403) {
-          router.push("/login");
-          return;
-        }
+
         const data = await res.json();
         set_hospitals(data.data || []);
       } catch {
-        router.push("/login");
+        router.push("/auth/login");
       } finally {
         set_loading(false);
       }
@@ -51,12 +49,11 @@ export default function AdminHospitalsPage() {
   const handle_status = useCallback(async (id: string, status: string) => {
     set_updating(id);
     try {
-      await fetch(
+      await auth_fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/admin/hospitals/${id}/status`,
         {
           method: "PATCH",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
+
           body: JSON.stringify({ status }),
         },
       );

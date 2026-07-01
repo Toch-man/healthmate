@@ -3,11 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
+import { useAuth } from "@/app/context/auth_context";
 
 export default function LoginPage() {
   const [show_password, set_show_password] = useState(false);
   const [loading, set_loading] = useState(false);
   const [form, set_form] = useState({ email: "", password: "" });
+  const { auth_fetch } = useAuth();
 
   const handle_change = (e: React.ChangeEvent<HTMLInputElement>) => {
     set_form({ ...form, [e.target.name]: e.target.value });
@@ -18,11 +20,10 @@ export default function LoginPage() {
     set_loading(true);
 
     try {
-      const res = await fetch(
+      const res = await auth_fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`,
         {
           method: "POST",
-          credentials: "include",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(form),
         },

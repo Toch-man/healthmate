@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/app/context/auth_context";
 
 interface DoctorProfile {
   first_name: string;
@@ -27,8 +28,9 @@ interface User {
 
 export default function DoctorProfilePage() {
   const router = useRouter();
-  const [user, set_user] = useState<User | null>(null);
-  const [loading, set_loading] = useState(true);
+
+  const { auth_fetch, user, loading } = useAuth();
+
   const [saving, set_saving] = useState(false);
   const [success, set_success] = useState(false);
   const [form, set_form] = useState<DoctorProfile>({
@@ -50,21 +52,9 @@ export default function DoctorProfilePage() {
   useEffect(() => {
     const fetch_profile = async () => {
       try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/user/me`,
-          { credentials: "include" },
-        );
-        if (res.status === 401) {
-          router.push("/login");
-          return;
-        }
-        const data = await res.json();
-        set_user(data.user);
-        if (data.user.doctor) set_form(data.user.doctor);
+        if (user!.doctor) set_form(user!.doctor);
       } catch {
         router.push("/login");
-      } finally {
-        set_loading(false);
       }
     };
     fetch_profile();
@@ -94,12 +84,11 @@ export default function DoctorProfilePage() {
   const handle_save = async () => {
     set_saving(true);
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/doctors/profile`,
+      const res = await auth_fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/doctors_profile`,
         {
           method: "PATCH",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
+
           body: JSON.stringify({
             first_name: form.first_name,
             last_name: form.last_name,

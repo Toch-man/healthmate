@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { io, Socket } from "socket.io-client";
+import { useAuth } from "@/app/context/auth_context";
 
 interface Message {
   id: string;
@@ -35,6 +36,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 export default function ChatPage() {
   const { appointment_id } = useParams() as { appointment_id: string };
   const router = useRouter();
+  const { auth_fetch, user } = useAuth();
   const [messages, set_messages] = useState<Message[]>([]);
   const [appointment, set_appointment] = useState<Appointment | null>(null);
   const [current_user, set_current_user] = useState<CurrentUser | null>(null);
@@ -51,31 +53,21 @@ export default function ChatPage() {
   useEffect(() => {
     const init = async () => {
       try {
-        const user_res = await fetch(`${API_URL}/api/user/me`, {
-          credentials: "include",
-        });
-        if (user_res.status === 401) {
-          router.push("/login");
-          return;
-        }
-        const user_data = await user_res.json();
-        set_current_user({ id: user_data.user.id, role: user_data.user.role });
+        set_current_user({ id: user!.id, role: user!.role });
 
-        const apt_res = await fetch(
+        const apt_res = await auth_fetch(
           `${API_URL}/api/appointments/${appointment_id}`,
-          { credentials: "include" },
         );
         const apt_data = await apt_res.json();
         set_appointment(apt_data.appointment);
 
-        const msg_res = await fetch(
+        const msg_res = await auth_fetch(
           `${API_URL}/api/messages/${appointment_id}`,
-          { credentials: "include" },
         );
         const msg_data = await msg_res.json();
         set_messages(msg_data.data || []);
       } catch {
-        router.push("/login");
+        router.push("/auth/login");
       } finally {
         set_loading(false);
       }

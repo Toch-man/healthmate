@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/app/context/auth_context";
 
 interface Appointment {
   id: string;
@@ -29,6 +30,7 @@ interface Appointment {
 
 export default function AppointmentsPage() {
   const router = useRouter();
+  const { auth_fetch } = useAuth();
   const [appointments, set_appointments] = useState<Appointment[]>([]);
   const [loading, set_loading] = useState(true);
   const [filter, set_filter] = useState("ALL");
@@ -37,18 +39,14 @@ export default function AppointmentsPage() {
   useEffect(() => {
     const fetch_appointments = async () => {
       try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/appointments/patient`,
-          { credentials: "include" },
+        const res = await auth_fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/appointments/patient_appointments`,
         );
-        if (res.status === 401) {
-          router.push("/login");
-          return;
-        }
+
         const data = await res.json();
         set_appointments(data.data || []);
       } catch {
-        router.push("/login");
+        router.push("/auth/login");
       } finally {
         set_loading(false);
       }
@@ -60,9 +58,9 @@ export default function AppointmentsPage() {
     if (!confirm("Are you sure you want to cancel this appointment?")) return;
     set_cancelling(id);
     try {
-      await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/appointments/${id}/cancel`,
-        { method: "DELETE", credentials: "include" },
+      await auth_fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/appointments/cancel_appointment${id}`,
+        { method: "DELETE" },
       );
       set_appointments((prev) => prev.filter((a) => a.id !== id));
     } catch {

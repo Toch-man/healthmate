@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-
+import { useAuth } from "@/app/context/auth_context";
 interface Doctor {
   id: string;
   first_name: string;
@@ -30,6 +30,7 @@ interface Appointment {
 
 export default function DoctorDashboard() {
   const router = useRouter();
+  const { auth_fetch, user, logout } = useAuth();
   const [doctor, set_doctor] = useState<Doctor | null>(null);
   const [appointments, set_appointments] = useState<Appointment[]>([]);
   const [loading, set_loading] = useState(true);
@@ -37,27 +38,18 @@ export default function DoctorDashboard() {
   useEffect(() => {
     const fetch_data = async () => {
       try {
-        const [user_res, apt_res] = await Promise.all([
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/me`, {
-            credentials: "include",
-          }),
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/appointments/doctor`, {
-            credentials: "include",
-          }),
-        ]);
+        const apt_res = await auth_fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/appointments/doctor`,
+        );\
+       
 
-        if (user_res.status === 401) {
-          router.push("/login");
-          return;
-        }
-
-        const user_data = await user_res.json();
+        
         const apt_data = await apt_res.json();
 
-        set_doctor(user_data.user.doctor);
+        set_doctor(user!.doctor);
         set_appointments(apt_data.data || []);
       } catch {
-        router.push("/login");
+        router.push("/auth/login");
       } finally {
         set_loading(false);
       }
@@ -67,21 +59,17 @@ export default function DoctorDashboard() {
   }, []);
 
   const handle_logout = async () => {
-    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/logout`, {
-      method: "POST",
-      credentials: "include",
-    });
-    router.push("/login");
+   await logout()
+    router.push("/auth/login");
   };
 
   const handle_appointment_status = async (id: string, status: string) => {
     try {
-      await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/appointments/status`,
+      await auth_fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/appointments_status`,
         {
           method: "PATCH",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
+        
           body: JSON.stringify({ id, status }),
         },
       );

@@ -2,20 +2,19 @@
 
 import { useState } from "react";
 import Link from "next/link";
-
+import { useAuth } from "@/app/context/auth_context";
 export default function ForgotPasswordPage() {
   const [step, set_step] = useState<1 | 2>(1);
   const [email, set_email] = useState("");
   const [loading, set_loading] = useState(false);
-
+  const { auth_fetch } = useAuth();
   const handle_submit = async () => {
     set_loading(true);
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/auth/forgot-password`,
+      const res = await auth_fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/auth/forgot_password`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email }),
         },
       );
@@ -62,7 +61,7 @@ export default function ForgotPasswordPage() {
             marginBottom: "2.5rem",
           }}
         >
-          Kizito<span style={{ color: "#4DD9C0" }}>Health</span>
+          Health<span style={{ color: "#4DD9C0" }}>mate</span>
         </div>
 
         {step === 1 ? (

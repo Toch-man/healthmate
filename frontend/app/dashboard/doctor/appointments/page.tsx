@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/app/context/auth_context";
 
 interface Appointment {
   id: string;
@@ -21,6 +22,7 @@ interface Appointment {
 
 export default function DoctorAppointmentsPage() {
   const router = useRouter();
+  const { auth_fetch } = useAuth();
   const [appointments, set_appointments] = useState<Appointment[]>([]);
   const [loading, set_loading] = useState(true);
   const [filter, set_filter] = useState("ALL");
@@ -30,14 +32,10 @@ export default function DoctorAppointmentsPage() {
   useEffect(() => {
     const fetch_appointments = async () => {
       try {
-        const res = await fetch(
+        const res = await auth_fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/appointments/doctor`,
-          { credentials: "include" },
         );
-        if (res.status === 401) {
-          router.push("/login");
-          return;
-        }
+
         const data = await res.json();
         set_appointments(data.data || []);
         if (data.data?.length > 0) set_selected(data.data[0]);
@@ -54,8 +52,8 @@ export default function DoctorAppointmentsPage() {
   const handle_status = useCallback(async (id: string, status: string) => {
     set_updating(true);
     try {
-      await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/appointments/status`,
+      await auth_fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/appointments/appointment_status`,
         {
           method: "PATCH",
           credentials: "include",

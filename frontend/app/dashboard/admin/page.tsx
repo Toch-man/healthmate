@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/app/context/auth_context";
 
 interface Doctor {
   id: string;
@@ -32,6 +33,7 @@ interface Stats {
 
 export default function AdminDashboard() {
   const router = useRouter();
+  const { auth_fetch, logout } = useAuth();
   const [pending_doctors, set_pending_doctors] = useState<Doctor[]>([]);
   const [pending_hospitals, set_pending_hospitals] = useState<Hospital[]>([]);
   const [stats, set_stats] = useState<Stats | null>(null);
@@ -41,27 +43,14 @@ export default function AdminDashboard() {
     const fetch_data = async () => {
       try {
         const [docs_res, hosp_res, users_res] = await Promise.all([
-          fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/admin/doctors/pending`,
-            {
-              credentials: "include",
-            },
+          auth_fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/api/admin/pending_doctors`,
           ),
-          fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/admin/hospitals/pending`,
-            {
-              credentials: "include",
-            },
+          auth_fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/api/admin/pending_hospitals`,
           ),
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/users`, {
-            credentials: "include",
-          }),
+          auth_fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/users`),
         ]);
-
-        if (docs_res.status === 401 || docs_res.status === 403) {
-          router.push("/login");
-          return;
-        }
 
         const docs_data = await docs_res.json();
         const hosp_data = await hosp_res.json();
@@ -82,7 +71,7 @@ export default function AdminDashboard() {
           pending_hospitals: hosp_data.data?.length || 0,
         });
       } catch {
-        router.push("/login");
+        router.push("/auth/login");
       } finally {
         set_loading(false);
       }
@@ -92,21 +81,17 @@ export default function AdminDashboard() {
   }, []);
 
   const handle_logout = async () => {
-    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/logout`, {
-      method: "POST",
-      credentials: "include",
-    });
-    router.push("/login");
+    logout();
+    router.push("/auth/login");
   };
 
   const handle_doctor_status = async (id: string, status: string) => {
     try {
-      await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/doctors/${id}/status`,
+      await auth_fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/doctors_status/${id}`,
         {
           method: "PATCH",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
+
           body: JSON.stringify({ status }),
         },
       );
@@ -118,12 +103,11 @@ export default function AdminDashboard() {
 
   const handle_hospital_status = async (id: string, status: string) => {
     try {
-      await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/hospitals/${id}/status`,
+      await auth_fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/hospitals_status/${id}`,
         {
           method: "PATCH",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
+
           body: JSON.stringify({ status }),
         },
       );

@@ -2,13 +2,16 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "../../context/auth_context";
 
 type Role = "PATIENT" | "DOCTOR" | "HOSPITAL";
 
 export default function ChooseRolePage() {
   const router = useRouter();
   const [role, set_role] = useState<Role | null>(null);
-  const [loading, set_loading] = useState(false);
+  const [loading, set_loading] = useState(false); // ← local loading for submit
+
+  const { auth_fetch } = useAuth(); // ← only need auth_fetch here
 
   const handle_submit = async () => {
     if (!role) return;
@@ -16,23 +19,16 @@ export default function ChooseRolePage() {
 
     const temp_token = sessionStorage.getItem("temp_token");
     if (!temp_token) {
-      router.push("/login");
+      router.push("/auth/login");
       return;
     }
 
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/auth/role`,
-        {
-          method: "PATCH",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${temp_token}`,
-          },
-          body: JSON.stringify({ role }),
-        },
-      );
+      // auth_fetch already adds API_URL — don't add it again
+      const res = await auth_fetch("/api/auth/set_role", {
+        method: "PATCH",
+        body: JSON.stringify({ role }),
+      });
 
       const data = await res.json();
 
@@ -43,9 +39,9 @@ export default function ChooseRolePage() {
 
       sessionStorage.removeItem("temp_token");
 
-      if (role === "PATIENT") router.push("/patient/dashboard");
-      else if (role === "DOCTOR") router.push("/doctor/dashboard");
-      else if (role === "HOSPITAL") router.push("/hospital/dashboard");
+      if (role === "PATIENT") router.push("/dashboard/patient");
+      else if (role === "DOCTOR") router.push("/dashboard/doctor");
+      else if (role === "HOSPITAL") router.push("/dashboard/hospital");
     } catch {
       alert("Something went wrong");
     } finally {
@@ -108,11 +104,11 @@ export default function ChooseRolePage() {
             marginBottom: "2.5rem",
           }}
         >
-          Kizito<span style={{ color: "#4DD9C0" }}>Health</span>
+          Health<span style={{ color: "#4DD9C0" }}>Mate</span>
         </div>
 
         <h2 style={{ fontSize: 22, fontWeight: 500, margin: "0 0 0.25rem" }}>
-          How will you use KizitoHealth?
+          How will you use HealthMate?
         </h2>
         <p
           style={{

@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-
+import { useAuth } from "../../context/auth_context";
 export default function CallbackPage() {
   const router = useRouter();
   const [error, set_error] = useState("");
+  const { auth_fetch } = useAuth();
 
   useEffect(() => {
     const exchange = async () => {
@@ -18,22 +19,15 @@ export default function CallbackPage() {
       }
 
       try {
-        const res = await fetch(
+        const res = await auth_fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/auth/exchange`,
           {
             method: "POST",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ code }),
           },
         );
 
         const data = await res.json();
-
-        if (!res.ok) {
-          set_error("Session expired. Please try logging in again.");
-          return;
-        }
 
         // new Google user — needs to pick role
         if (!data.user.role) {

@@ -1,6 +1,26 @@
 import { Request, Response } from "express";
 import prisma from "../src/db.ts";
 
+export const get_all_appointments = async (req: Request, res: Response) => {
+  try {
+    const appointments = await prisma.appointment.findMany({
+      include: {
+        patient: { select: { first_name: true, last_name: true } },
+        doctor: {
+          select: { first_name: true, last_name: true, specialization: true },
+        },
+        hospital: { select: { name: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+    return res.status(200).json({ success: true, data: appointments });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ success: false, message: "something went wrong", error });
+  }
+};
+
 //  GET ALL PENDING DOCTORS
 export const get_pending_doctors = async (req: Request, res: Response) => {
   try {

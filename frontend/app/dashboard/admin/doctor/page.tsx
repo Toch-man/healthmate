@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/app/context/auth_context";
 
 interface Doctor {
   id: string;
@@ -26,18 +27,15 @@ export default function AdminDoctorsPage() {
   const [filter, set_filter] = useState("ALL");
   const [search, set_search] = useState("");
   const [updating, set_updating] = useState<string | null>(null);
+  const { auth_fetch } = useAuth();
 
   useEffect(() => {
     const fetch_users = async () => {
       try {
-        const res = await fetch(
+        const res = await auth_fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/admin/users`,
-          { credentials: "include" },
         );
-        if (res.status === 401 || res.status === 403) {
-          router.push("/login");
-          return;
-        }
+
         const data = await res.json();
         set_doctors(
           data.data
@@ -48,7 +46,7 @@ export default function AdminDoctorsPage() {
             })) || [],
         );
       } catch {
-        router.push("/login");
+        router.push("/auth/login");
       } finally {
         set_loading(false);
       }
@@ -59,12 +57,11 @@ export default function AdminDoctorsPage() {
   const handle_status = useCallback(async (id: string, status: string) => {
     set_updating(id);
     try {
-      await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/doctors/${id}/status`,
+      await auth_fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/doctors_status/${id}`,
         {
           method: "PATCH",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
+
           body: JSON.stringify({ status }),
         },
       );

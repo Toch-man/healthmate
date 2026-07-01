@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/app/context/auth_context";
 
 interface Doctor {
   id: string;
@@ -19,6 +20,7 @@ interface Doctor {
 
 export default function BookAppointmentPage() {
   const router = useRouter();
+  const { auth_fetch } = useAuth();
   const [doctors, set_doctors] = useState<Doctor[]>([]);
   const [loading, set_loading] = useState(true);
   const [booking, set_booking] = useState(false);
@@ -38,9 +40,9 @@ export default function BookAppointmentPage() {
         if (specialization_filter)
           params.set("specialization", specialization_filter);
 
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/patients/doctors?${params}`,
-          { credentials: "include" },
+        const res = await auth_fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/patients/doctors?$/d{params}`
+          { credentials: "include" ,
         );
         if (res.status === 401) {
           router.push("/login");
@@ -64,13 +66,13 @@ export default function BookAppointmentPage() {
     }
     set_booking(true);
     try {
-      const res = await fetch(
+      const res = await auth_fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/appointments/${selected_doctor.id}/book`,
         {
           method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(form),
+         
+          
+          body: JSON.stringify(form,
         },
       );
       const data = await res.json();

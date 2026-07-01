@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/app/context/auth_context";
 
 interface Patient {
   id: string;
@@ -18,6 +19,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 export default function AdminPatientsPage() {
   const router = useRouter();
+  const { auth_fetch } = useAuth();
   const [patients, set_patients] = useState<Patient[]>([]);
   const [loading, set_loading] = useState(true);
   const [search, set_search] = useState("");
@@ -25,17 +27,15 @@ export default function AdminPatientsPage() {
   useEffect(() => {
     const fetch_patients = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/admin/users`, {
-          credentials: "include",
-        });
+        const res = await auth_fetch(`${API_URL}/api/admin/users`);
         if (res.status === 401 || res.status === 403) {
-          router.push("/login");
+          router.push("/auth/login");
           return;
         }
         const data = await res.json();
         set_patients(data.data?.filter((u: any) => u.role === "PATIENT") || []);
       } catch {
-        router.push("/login");
+        router.push("/auth/login");
       } finally {
         set_loading(false);
       }

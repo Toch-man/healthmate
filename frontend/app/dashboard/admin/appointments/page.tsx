@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/app/context/auth_context";
 
 interface Appointment {
   id: string;
@@ -23,21 +24,18 @@ export default function AdminAppointmentsPage() {
   const [loading, set_loading] = useState(true);
   const [filter, set_filter] = useState("ALL");
   const [search, set_search] = useState("");
-
+  const { auth_fetch } = useAuth();
   useEffect(() => {
     const fetch_appointments = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/admin/appointments`, {
+        const res = await auth_fetch(`${API_URL}/api/admin/appointments`, {
           credentials: "include",
         });
-        if (res.status === 401 || res.status === 403) {
-          router.push("/login");
-          return;
-        }
+
         const data = await res.json();
         set_appointments(data.data || []);
       } catch {
-        router.push("/login");
+        router.push("/auth/login");
       } finally {
         set_loading(false);
       }

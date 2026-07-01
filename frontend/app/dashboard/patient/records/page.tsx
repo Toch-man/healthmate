@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/app/context/auth_context";
 
 interface HealthRecord {
   id: string;
@@ -18,6 +19,7 @@ interface HealthRecord {
 
 export default function HealthRecordsPage() {
   const router = useRouter();
+  const { auth_fetch } = useAuth();
   const [records, set_records] = useState<HealthRecord[]>([]);
   const [loading, set_loading] = useState(true);
   const [selected, set_selected] = useState<HealthRecord | null>(null);
@@ -25,14 +27,10 @@ export default function HealthRecordsPage() {
   useEffect(() => {
     const fetch_records = async () => {
       try {
-        const res = await fetch(
+        const res = await auth_fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/patients/records`,
-          { credentials: "include" },
         );
-        if (res.status === 401) {
-          router.push("/login");
-          return;
-        }
+
         const data = await res.json();
         set_records(data.data || []);
         if (data.data?.length > 0) set_selected(data.data[0]);

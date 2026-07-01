@@ -3,8 +3,9 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/app/context/auth_context";
 
-interface Patient {
+interface PatientProfile {
   first_name: string;
   last_name: string;
   phone: string;
@@ -17,18 +18,14 @@ interface Patient {
   conditions: string[];
 }
 
-interface User {
-  email: string;
-  patient: Patient;
-}
-
 export default function PatientProfilePage() {
   const router = useRouter();
-  const [user, set_user] = useState<User | null>(null);
+  const { auth_fetch, user, logout } = useAuth();
+
   const [loading, set_loading] = useState(true);
   const [saving, set_saving] = useState(false);
   const [success, set_success] = useState(false);
-  const [form, set_form] = useState<Patient>({
+  const [form, set_form] = useState<PatientProfile>({
     first_name: "",
     last_name: "",
     phone: "",
@@ -49,30 +46,9 @@ export default function PatientProfilePage() {
   useEffect(() => {
     const fetch_profile = async () => {
       try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/patients/profile`,
-          { credentials: "include" },
-        );
-        if (res.status === 401) {
-          router.push("/login");
-          return;
-        }
-        const data = await res.json();
-        set_user(data.data);
-        set_form({
-          first_name: data.data.patient?.first_name || "",
-          last_name: data.data.patient?.last_name || "",
-          phone: data.data.patient?.phone || "",
-          date_of_birth: data.data.patient?.date_of_birth?.split("T")[0] || "",
-          gender: data.data.patient?.gender || "",
-          blood_group: data.data.patient?.blood_group || "",
-          language: data.data.patient?.language || "English",
-          allergies: data.data.patient?.allergies || [],
-          medications: data.data.patient?.medications || [],
-          conditions: data.data.patient?.conditions || [],
-        });
+        if (user!.patient) set_form(user!.patient);
       } catch {
-        router.push("/login");
+        router.push("/auth/login");
       } finally {
         set_loading(false);
       }
@@ -125,12 +101,11 @@ export default function PatientProfilePage() {
   const handle_save = async () => {
     set_saving(true);
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/patients/profile`,
+      const res = await auth_fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/patients/update_profile`,
         {
           method: "PATCH",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
+
           body: JSON.stringify(form),
         },
       );

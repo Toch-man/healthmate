@@ -8,6 +8,8 @@ import patient_route from "./routes/patient_route.ts";
 import diagnosis_route from "./routes/diagnosis_route.ts";
 import appointment_route from "./routes/appointment_route.ts";
 import admin_route from "./routes/admin_route.ts";
+import notification_route from "./routes/notification_routes.ts";
+import message_route from "./routes/message_route.ts";
 
 const app = express();
 
@@ -38,6 +40,8 @@ app.use("/api/doctor", doctor_route);
 app.use("/api/patient", patient_route);
 app.use("/api", diagnosis_route);
 app.use("/api/appointment", appointment_route);
+app.use("/api/notifications", notification_route);
 app.use("/api/admin", admin_route);
+app.use("/api/messages", message_route);
 
 export default app;

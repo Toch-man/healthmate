@@ -17,7 +17,7 @@ router.get(
   appointment_controller.get_patient_appointment,
 );
 router.get(
-  "/doctor_appointments/:doctor_id",
+  "/doctor",
   authenticate,
   role_allowed("DOCTOR"),
   appointment_controller.get_doctor_appointment,

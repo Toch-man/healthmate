@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/app/context/auth_context";
 
 interface Patient {
   id: string;
@@ -16,6 +17,7 @@ interface Patient {
 
 export default function DoctorPatientsPage() {
   const router = useRouter();
+  const { auth_fetch } = useAuth();
   const [patients, set_patients] = useState<Patient[]>([]);
   const [loading, set_loading] = useState(true);
   const [search, set_search] = useState("");
@@ -23,14 +25,10 @@ export default function DoctorPatientsPage() {
   useEffect(() => {
     const fetch_patients = async () => {
       try {
-        const res = await fetch(
+        const res = await auth_fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/appointments/doctor`,
-          { credentials: "include" },
         );
-        if (res.status === 401) {
-          router.push("/login");
-          return;
-        }
+
         const data = await res.json();
 
         const seen = new Set();

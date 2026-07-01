@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/app/context/auth_context";
 
 interface User {
   id: string;
@@ -39,7 +40,7 @@ interface HealthRecord {
 
 export default function PatientDashboard() {
   const router = useRouter();
-  const [user, set_user] = useState<User | null>(null);
+  const { auth_fetch, user, logout } = useAuth();
   const [appointments, set_appointments] = useState<Appointment[]>([]);
   const [records, set_records] = useState<HealthRecord[]>([]);
   const [loading, set_loading] = useState(true);
@@ -47,32 +48,20 @@ export default function PatientDashboard() {
   useEffect(() => {
     const fetch_data = async () => {
       try {
-        const [user_res, apt_res, rec_res] = await Promise.all([
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/me`, {
-            credentials: "include",
-          }),
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/appointments/patient`, {
-            credentials: "include",
-          }),
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/health-records`, {
-            credentials: "include",
-          }),
+        const [apt_res, rec_res] = await Promise.all([
+          auth_fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/api/appointments/patient_appointments`,
+          ),
+          auth_fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/health-records`),
         ]);
 
-        if (user_res.status === 401) {
-          router.push("/login");
-          return;
-        }
-
-        const user_data = await user_res.json();
         const apt_data = await apt_res.json();
         const rec_data = await rec_res.json();
 
-        set_user(user_data.user);
         set_appointments(apt_data.data || []);
         set_records(rec_data.data || []);
       } catch {
-        router.push("/login");
+        router.push("/auth/login");
       } finally {
         set_loading(false);
       }
@@ -82,10 +71,7 @@ export default function PatientDashboard() {
   }, []);
 
   const handle_logout = async () => {
-    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/logout`, {
-      method: "POST",
-      credentials: "include",
-    });
+    await logout();
     router.push("/login");
   };
 
