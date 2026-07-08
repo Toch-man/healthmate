@@ -85,7 +85,7 @@ export default function CallbackPage() {
             {error}
           </p>
           <a
-            href="/login"
+            href="/auth/login"
             style={{
               display: "inline-block",
               padding: "10px 24px",

@@ -334,7 +334,7 @@ export default function ResetPasswordPage() {
 
         <div style={{ textAlign: "center" }}>
           <a
-            href="/login"
+            href="/auth/login"
             style={{ fontSize: 13, color: "#1B2B6B", textDecoration: "none" }}
           >
             ← Back to login

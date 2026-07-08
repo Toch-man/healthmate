@@ -54,7 +54,7 @@ export default function DoctorProfilePage() {
       try {
         if (user!.doctor) set_form(user!.doctor);
       } catch {
-        router.push("/login");
+        router.push("/auth/login");
       }
     };
     fetch_profile();

@@ -35,7 +35,7 @@ export default function HealthRecordsPage() {
         set_records(data.data || []);
         if (data.data?.length > 0) set_selected(data.data[0]);
       } catch {
-        router.push("/login");
+        router.push("/auth/login");
       } finally {
         set_loading(false);
       }

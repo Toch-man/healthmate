@@ -72,7 +72,7 @@ export default function PatientDashboard() {
 
   const handle_logout = async () => {
     await logout();
-    router.push("/login");
+    router.push("/auth/login");
   };
 
   const status_badge = (status: string) => {

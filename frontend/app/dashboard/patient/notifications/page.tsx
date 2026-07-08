@@ -26,13 +26,13 @@ export default function NotificationsPage() {
           { credentials: "include" },
         );
         if (res.status === 401) {
-          router.push("/login");
+          router.push("/auth/login");
           return;
         }
         const data = await res.json();
         set_notifications(data.data || []);
       } catch {
-        router.push("/login");
+        router.push("/auth/login");
       } finally {
         set_loading(false);
       }

@@ -49,7 +49,7 @@ export default function DoctorPatientsPage() {
         }
         set_patients(patient_list);
       } catch {
-        router.push("/login");
+        router.push("/auth/login");
       } finally {
         set_loading(false);
       }

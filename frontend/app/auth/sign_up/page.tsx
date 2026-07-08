@@ -168,7 +168,7 @@ export default function SignupPage() {
           <p style={{ fontSize: 13, color: "#6b7280", margin: "0 0 1.5rem" }}>
             Already have one?{" "}
             <Link
-              href="/login"
+              href="/auth/login"
               style={{
                 color: "#1B2B6B",
                 textDecoration: "none",
