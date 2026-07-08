@@ -35,6 +35,7 @@ interface Doctor {
   location: string;
   bio: string;
   licenseNumber: string;
+  hospital?: { name: string };
   rating: number;
   status: string;
   available: boolean;

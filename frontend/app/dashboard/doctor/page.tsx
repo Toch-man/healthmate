@@ -5,15 +5,19 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/auth_context";
 interface Doctor {
-  id: string;
   first_name: string;
   last_name: string;
+  phone: string;
+  gender: string;
   specialization: string;
-  rating: number;
-  totalRatings: number;
+  yearsExperience: number;
+  location: string;
+  bio: string;
+  licenseNumber: string;
   available: boolean;
   status: string;
-  yearsExperience: number;
+  rating: number;
+  totalRatings: number;
   hospital?: { name: string };
 }
 
@@ -40,13 +44,11 @@ export default function DoctorDashboard() {
       try {
         const apt_res = await auth_fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/appointments/doctor`,
-        );\
-       
+        );
 
-        
         const apt_data = await apt_res.json();
 
-        set_doctor(user!.doctor);
+        set_doctor(user?.doctor ?? null);
         set_appointments(apt_data.data || []);
       } catch {
         router.push("/auth/login");
@@ -59,7 +61,7 @@ export default function DoctorDashboard() {
   }, []);
 
   const handle_logout = async () => {
-   await logout()
+    await logout();
     router.push("/auth/login");
   };
 
@@ -69,7 +71,7 @@ export default function DoctorDashboard() {
         `${process.env.NEXT_PUBLIC_API_URL}/api/appointments_status`,
         {
           method: "PATCH",
-        
+
           body: JSON.stringify({ id, status }),
         },
       );

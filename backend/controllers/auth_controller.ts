@@ -708,7 +708,26 @@ export const me = async (req: Request, res: Response) => {
         role: true,
         createdAt: true,
         patient: { select: { first_name: true, last_name: true } },
-        doctor: { select: { first_name: true, last_name: true, status: true } },
+        doctor: {
+          select: {
+            first_name: true,
+            last_name: true,
+            phone: true,
+            gender: true,
+            specialization: true,
+            yearsExperience: true,
+            location: true,
+            bio: true,
+            licenseNumber: true,
+            available: true,
+            status: true,
+            rating: true,
+            totalRatings: true,
+            hospital: {
+              select: { name: true },
+            },
+          },
+        },
         hospital: { select: { name: true, status: true } },
       },
     });
