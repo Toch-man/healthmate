@@ -111,7 +111,7 @@ export default function LandingPage() {
           }}
         >
           <Link
-            href="/signup"
+            href="/auth/sign_up"
             style={{
               padding: "12px 28px",
               borderRadius: 8,
