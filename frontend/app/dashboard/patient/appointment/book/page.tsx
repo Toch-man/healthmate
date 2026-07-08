@@ -41,17 +41,17 @@ export default function BookAppointmentPage() {
           params.set("specialization", specialization_filter);
 
         const res = await auth_fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/patients/doctors?$/d{params}`
-          { credentials: "include" ,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/patients/doctors?$/d{params}`,
+          { credentials: "include" },
         );
         if (res.status === 401) {
-          router.push("/login");
+          router.push("/auth/login");
           return;
         }
         const data = await res.json();
         set_doctors(data.data || []);
       } catch {
-        router.push("/login");
+        router.push("/auth/login");
       } finally {
         set_loading(false);
       }
@@ -70,9 +70,8 @@ export default function BookAppointmentPage() {
         `${process.env.NEXT_PUBLIC_API_URL}/api/appointments/${selected_doctor.id}/book`,
         {
           method: "POST",
-         
-          
-          body: JSON.stringify(form,
+
+          body: JSON.stringify(form),
         },
       );
       const data = await res.json();
@@ -80,7 +79,7 @@ export default function BookAppointmentPage() {
         alert(data.message);
         return;
       }
-      router.push("/patient/appointments");
+      router.push("/patient/appointment");
     } catch {
       alert("Something went wrong");
     } finally {
