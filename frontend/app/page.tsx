@@ -38,7 +38,7 @@ export default function LandingPage() {
             Log in
           </Link>
           <Link
-            href="/auth/signup"
+            href="/auth/sign_up"
             style={{
               padding: "8px 18px",
               border: "none",
@@ -358,7 +358,7 @@ export default function LandingPage() {
           Join thousands already using KizitoHealth
         </p>
         <Link
-          href="/signup"
+          href="/auth/signup"
           style={{
             display: "inline-block",
             background: "#4DD9C0",
