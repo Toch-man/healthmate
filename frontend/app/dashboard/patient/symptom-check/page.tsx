@@ -57,14 +57,11 @@ export default function SymptomCheckPage() {
     set_loading(true);
 
     try {
-      const res = await auth_fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/diagnosis/analyze`,
-        {
-          method: "POST",
+      const res = await auth_fetch(`/api/diagnosis/analyze`, {
+        method: "POST",
 
-          body: JSON.stringify({ raw_input: input }),
-        },
-      );
+        body: JSON.stringify({ raw_input: input }),
+      });
 
       const data = await res.json();
 
