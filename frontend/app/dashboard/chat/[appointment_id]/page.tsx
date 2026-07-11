@@ -55,15 +55,11 @@ export default function ChatPage() {
       try {
         set_current_user({ id: user!.id, role: user!.role });
 
-        const apt_res = await auth_fetch(
-          `${API_URL}/api/appointments/${appointment_id}`,
-        );
+        const apt_res = await auth_fetch(`/api/appointments/${appointment_id}`);
         const apt_data = await apt_res.json();
         set_appointment(apt_data.appointment);
 
-        const msg_res = await auth_fetch(
-          `${API_URL}/api/messages/${appointment_id}`,
-        );
+        const msg_res = await auth_fetch(`/api/messages/${appointment_id}`);
         const msg_data = await msg_res.json();
         set_messages(msg_data.data || []);
       } catch {
