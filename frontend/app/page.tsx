@@ -20,7 +20,7 @@ export default function LandingPage() {
         }}
       >
         <div style={{ fontSize: 20, fontWeight: 500, color: "#1B2B6B" }}>
-          Kizito<span style={{ color: "#4DD9C0" }}>Health</span>
+          Health<span style={{ color: "#4DD9C0" }}>Mate</span>
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <Link
