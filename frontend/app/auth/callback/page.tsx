@@ -19,13 +19,10 @@ export default function CallbackPage() {
       }
 
       try {
-        const res = await auth_fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/auth/exchange`,
-          {
-            method: "POST",
-            body: JSON.stringify({ code }),
-          },
-        );
+        const res = await auth_fetch(`/api/auth/exchange`, {
+          method: "POST",
+          body: JSON.stringify({ code }),
+        });
 
         const data = await res.json();
 

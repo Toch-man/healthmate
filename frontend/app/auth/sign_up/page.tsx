@@ -44,15 +44,12 @@ export default function SignupPage() {
           : "/api/auth/hospital_signup";
 
     try {
-      const res = await auth_fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}${endpoint}`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...form, role }),
-        },
-      );
+      const res = await auth_fetch(`${endpoint}`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...form, role }),
+      });
       const data = await res.json();
       if (!res.ok) {
         alert(data.message);

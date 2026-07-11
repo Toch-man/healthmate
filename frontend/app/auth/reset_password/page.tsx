@@ -33,13 +33,10 @@ export default function ResetPasswordPage() {
     const token = params.get("token");
 
     try {
-      const res = await auth_fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/auth/reset_password`,
-        {
-          method: "POST",
-          body: JSON.stringify({ token, password: form.password }),
-        },
-      );
+      const res = await auth_fetch(`/api/auth/reset_password`, {
+        method: "POST",
+        body: JSON.stringify({ token, password: form.password }),
+      });
 
       const data = await res.json();
 

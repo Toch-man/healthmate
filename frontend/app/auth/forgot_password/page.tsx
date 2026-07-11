@@ -11,13 +11,10 @@ export default function ForgotPasswordPage() {
   const handle_submit = async () => {
     set_loading(true);
     try {
-      const res = await auth_fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/auth/forgot_password`,
-        {
-          method: "POST",
-          body: JSON.stringify({ email }),
-        },
-      );
+      const res = await auth_fetch(`/api/auth/forgot_password`, {
+        method: "POST",
+        body: JSON.stringify({ email }),
+      });
       if (res.ok) set_step(2);
       else alert("Email not found");
     } catch {
