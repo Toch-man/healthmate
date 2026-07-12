@@ -49,10 +49,8 @@ export default function PatientDashboard() {
     const fetch_data = async () => {
       try {
         const [apt_res, rec_res] = await Promise.all([
-          auth_fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/appointments/patient_appointments`,
-          ),
-          auth_fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/health-records`),
+          auth_fetch(`/api/appointments/patient_appointments`),
+          auth_fetch(`/api/patient/health-records`),
         ]);
 
         const apt_data = await apt_res.json();
@@ -60,8 +58,8 @@ export default function PatientDashboard() {
 
         set_appointments(apt_data.data || []);
         set_records(rec_data.data || []);
-      } catch {
-        router.push("/auth/login");
+      } catch (err: any) {
+        console.log(`${err}`);
       } finally {
         set_loading(false);
       }
@@ -185,7 +183,7 @@ export default function PatientDashboard() {
   const upcoming = appointments.filter((a) =>
     ["PENDING", "APPROVED"].includes(a.status),
   );
-  const latest_record = records[0];
+  const latest_record = records[records.length - 1];
 
   const now = new Date();
   const hour = now.getHours();

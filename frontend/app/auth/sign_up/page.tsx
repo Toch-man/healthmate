@@ -3,10 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/app/context/auth_context";
+import { useRouter } from "next/navigation";
+
 type Role = "PATIENT" | "DOCTOR" | "HOSPITAL";
 
 export default function SignupPage() {
   const { auth_fetch } = useAuth();
+  const router = useRouter();
   const [role, set_role] = useState<Role>("PATIENT");
   const [loading, set_loading] = useState(false);
   const [show_password, set_show_password] = useState(false);
@@ -55,10 +58,8 @@ export default function SignupPage() {
         alert(data.message);
         return;
       }
-      window.location.href =
-        role === "PATIENT"
-          ? "/patient/dashboard"
-          : `/${role.toLowerCase()}/dashboard`;
+
+      router.push(`/${role.toLowerCase()}/dashboard`);
     } catch {
       alert("Something went wrong");
     } finally {
@@ -145,7 +146,7 @@ export default function SignupPage() {
           </p>
         </div>
         <p style={{ fontSize: 11, color: "#5C78B0", margin: 0 }}>
-          © 2026 KizitoHealth
+          © 2026 HealthMate
         </p>
       </div>
 

@@ -4,8 +4,9 @@ import { useState } from "react";
 import Link from "next/link";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { useAuth } from "@/app/context/auth_context";
-
+import { useRouter } from "next/navigation";
 export default function LoginPage() {
+  const router = useRouter();
   const [show_password, set_show_password] = useState(false);
   const [loading, set_loading] = useState(false);
   const [form, set_form] = useState({ email: "", password: "" });
@@ -34,14 +35,11 @@ export default function LoginPage() {
       }
 
       // redirect based on role
-      if (data.user.role === "PATIENT")
-        window.location.href = "/patient/dashboard";
-      else if (data.user.role === "DOCTOR")
-        window.location.href = "/doctor/dashboard";
+      if (data.user.role === "PATIENT") router.push("/patient/dashboard");
+      else if (data.user.role === "DOCTOR") router.push("/doctor/dashboard");
       else if (data.user.role === "HOSPITAL")
-        window.location.href = "/hospital/dashboard";
-      else if (data.user.role === "ADMIN")
-        window.location.href = "/admin/dashboard";
+        router.push("/hospital/dashboard");
+      else if (data.user.role === "ADMIN") router.push("/admin/dashboard");
     } catch (error) {
       alert("Something went wrong");
     } finally {
