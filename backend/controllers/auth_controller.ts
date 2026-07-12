@@ -316,7 +316,7 @@ export const patient_signup = async (req: Request, res: Response) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
-      maxAge: 1000 * 60 * 60 ** 24 * 7,
+      maxAge: 1000 * 60 * 60 * 24 * 7,
     });
 
     res.status(201).json({

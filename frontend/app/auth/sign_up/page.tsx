@@ -120,7 +120,7 @@ export default function SignupPage() {
               marginBottom: "3rem",
             }}
           >
-            Kizito<span style={{ color: "#4DD9C0" }}>Health</span>
+            Health<span style={{ color: "#4DD9C0" }}>Mate</span>
           </div>
           <h2
             style={{
