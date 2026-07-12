@@ -100,7 +100,7 @@ export default function SignupPage() {
         fontFamily: "Inter, sans-serif",
       }}
     >
-      {/* Left */}
+      {/* Left — hidden on mobile */}
       <div
         style={{
           width: 260,
@@ -111,6 +111,7 @@ export default function SignupPage() {
           justifyContent: "space-between",
           flexShrink: 0,
         }}
+        className="hidden md:flex"
       >
         <div>
           <div
@@ -150,16 +151,19 @@ export default function SignupPage() {
         </p>
       </div>
 
-      {/* Right */}
+      {/* Right — full width on mobile */}
       <div
-        style={{
-          flex: 1,
-          padding: "2rem 3rem",
-          overflowY: "auto",
-          background: "#fff",
-        }}
+        style={{ flex: 1, overflowY: "auto", background: "#fff" }}
+        className="p-6 md:p-12"
       >
-        <div style={{ maxWidth: 420 }}>
+        {/* Mobile logo — only shows on small screens */}
+        <div className="flex md:hidden items-center gap-2 mb-6">
+          <span style={{ fontSize: 18, fontWeight: 500, color: "#1B2B6B" }}>
+            Health<span style={{ color: "#4DD9C0" }}>Mate</span>
+          </span>
+        </div>
+
+        <div style={{ maxWidth: 420, width: "100%" }}>
           <h2 style={{ fontSize: 20, fontWeight: 500, margin: "0 0 0.25rem" }}>
             Create your account
           </h2>
