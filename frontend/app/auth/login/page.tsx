@@ -35,11 +35,11 @@ export default function LoginPage() {
       }
 
       // redirect based on role
-      if (data.user.role === "PATIENT") router.push("/patient/dashboard");
-      else if (data.user.role === "DOCTOR") router.push("/doctor/dashboard");
+      if (data.user.role === "PATIENT") router.push("/dashboard/patient");
+      else if (data.user.role === "DOCTOR") router.push("/dashboard/doctor");
       else if (data.user.role === "HOSPITAL")
-        router.push("/hospital/dashboard");
-      else if (data.user.role === "ADMIN") router.push("/admin/dashboard");
+        router.push("/dashboard/hospital");
+      else if (data.user.role === "ADMIN") router.push("/dashboard/admin");
     } catch (error) {
       alert("Something went wrong");
     } finally {
