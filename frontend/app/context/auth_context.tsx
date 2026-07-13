@@ -102,7 +102,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           });
         } else {
           // refresh failed — logout
-          set_user(null);
+          logout();
+
           router.push("/auth/login");
           return res;
         }

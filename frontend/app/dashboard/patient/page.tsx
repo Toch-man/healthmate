@@ -49,7 +49,7 @@ export default function PatientDashboard() {
     const fetch_data = async () => {
       try {
         const [apt_res, rec_res] = await Promise.all([
-          auth_fetch(`/api/appointments/patient_appointments`),
+          auth_fetch(`/api/appointment/patient_appointments`),
           auth_fetch(`/api/patient/health-records`),
         ]);
 
