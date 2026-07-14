@@ -16,7 +16,7 @@ router.get(
 );
 
 // auth routes
-router.post("/me", auth_controller.me);
+router.get("/me", authenticate, auth_controller.me);
 router.post("/patient_signup", auth_controller.patient_signup);
 router.post("/doctor_signup", auth_controller.doctor_signup);
 router.post("/login", auth_controller.log_in);

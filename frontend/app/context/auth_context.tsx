@@ -8,7 +8,7 @@ import {
   useCallback,
   ReactNode,
 } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
@@ -68,8 +68,10 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
+  const pathname = usePathname();
   const [user, set_user] = useState<User | null>(null);
   const [loading, set_loading] = useState(true);
+  const PUBLIC_PAGES = ["/", "/auth/login", "/auth/signup"];
 
   // centralized fetch — auto refreshes token on 401
   const auth_fetch = useCallback(
@@ -129,12 +131,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [auth_fetch]);
 
   useEffect(() => {
+    if (PUBLIC_PAGES.includes(pathname)) {
+      set_loading(false);
+      return;
+    }
     const init = async () => {
       await refresh_user();
       set_loading(false);
     };
     init();
-  }, []);
+  }, [user]);
 
   const logout = useCallback(async () => {
     try {
