@@ -143,16 +143,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [auth_fetch]);
 
   useEffect(() => {
-    if (PUBLIC_PAGES.includes(pathname)) {
-      set_loading(false);
-      return;
-    }
     const init = async () => {
       await refresh_user();
       set_loading(false);
     };
     init();
-  }, [pathname]);
+  }, []);
+
+  // Redirect unauthenticated users away from protected pages
+  useEffect(() => {
+    if (!loading && !user && !PUBLIC_PAGES.includes(pathname)) {
+      router.push("/auth/login");
+    }
+  }, [user, loading, pathname, router]);
 
   return (
     <AuthContext.Provider value={{ user, loading, logout, auth_fetch }}>

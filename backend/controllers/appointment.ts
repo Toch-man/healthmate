@@ -102,11 +102,11 @@ export const book_appointment = async (req: Request, res: Response) => {
 };
 
 export const get_patient_appointment = async (req: Request, res: Response) => {
-  const patient_id: string = req.user!.id;
+  const user_id: string = req.user!.id;
 
   try {
     const patient = await prisma.patient.findUnique({
-      where: { id: patient_id },
+      where: { user_id: user_id },
     });
 
     if (!patient) {
@@ -116,7 +116,7 @@ export const get_patient_appointment = async (req: Request, res: Response) => {
       });
     }
     const appointment = await prisma.appointment.findMany({
-      where: { patient_id: patient_id },
+      where: { patient_id: patient.id },
       include: {
         doctor: {
           select: {

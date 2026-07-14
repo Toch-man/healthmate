@@ -126,14 +126,26 @@ export default function PatientDashboard() {
     {
       label: "Dashboard",
       icon: "🏠",
-      href: "/patient/dashboard",
+      href: "/dashboard/patient",
       active: true,
     },
-    { label: "Symptom check", icon: "🩺", href: "/patient/symptom-check" },
-    { label: "Appointments", icon: "📅", href: "/patient/appointments" },
-    { label: "Health records", icon: "📋", href: "/patient/records" },
-    { label: "Notifications", icon: "🔔", href: "/patient/notifications" },
-    { label: "Profile", icon: "👤", href: "/patient/profile" },
+    {
+      label: "Symptom check",
+      icon: "🩺",
+      href: "/dashboard/patient/symptom-check",
+    },
+    {
+      label: "Appointments",
+      icon: "📅",
+      href: "/dashboard/patient/appointment",
+    },
+    { label: "Health records", icon: "📋", href: "/dashboard/patient/records" },
+    {
+      label: "Notifications",
+      icon: "🔔",
+      href: "/dashboard/patient/notifications",
+    },
+    { label: "Profile", icon: "👤", href: "/dashboard/patient/profile" },
   ];
 
   const sidebar_style = {
@@ -321,7 +333,7 @@ export default function PatientDashboard() {
             </div>
           </div>
           <Link
-            href="/patient/notifications"
+            href="/dashboard/patient/notifications"
             style={{
               position: "relative",
               display: "flex",
@@ -360,7 +372,7 @@ export default function PatientDashboard() {
               How are you feeling today?
             </div>
             <Link
-              href="/patient/symptom-check"
+              href="/dashboard/patient/symptom-check"
               style={{
                 display: "inline-block",
                 padding: "8px 16px",
@@ -449,7 +461,7 @@ export default function PatientDashboard() {
                 Upcoming appointments
               </div>
               <Link
-                href="/patient/appointments"
+                href="/dashboard/patient/appointment"
                 style={{
                   fontSize: 12,
                   color: "#1B2B6B",
@@ -467,7 +479,7 @@ export default function PatientDashboard() {
                   No upcoming appointments
                 </div>
                 <Link
-                  href="/patient/appointments/book"
+                  href="/dashboard/patient/appointment/book"
                   style={{
                     display: "inline-block",
                     marginTop: 12,
@@ -606,7 +618,7 @@ export default function PatientDashboard() {
                     }}
                   >
                     <Link
-                      href={`/patient/records/${latest_record.id}`}
+                      href={`/dashboard/patient/records/${latest_record.id}`}
                       style={{
                         fontSize: 12,
                         color: "#1B2B6B",
@@ -624,7 +636,7 @@ export default function PatientDashboard() {
                     No checks yet
                   </div>
                   <Link
-                    href="/patient/symptom-check"
+                    href="/dashboard/patient/symptom-check"
                     style={{
                       display: "inline-block",
                       marginTop: 8,
@@ -702,7 +714,7 @@ export default function PatientDashboard() {
                 }}
               >
                 <Link
-                  href="/patient/profile"
+                  href="/dashboard/patient/profile"
                   style={{
                     fontSize: 12,
                     color: "#1B2B6B",
