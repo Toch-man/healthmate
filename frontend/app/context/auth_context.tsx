@@ -73,6 +73,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, set_loading] = useState(true);
   const PUBLIC_PAGES = ["/", "/auth/login", "/auth/signup"];
 
+  const logout = useCallback(async () => {
+    try {
+      await fetch(`${API_URL}/api/auth/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
+    } finally {
+      set_user(null);
+      router.push("/auth/login");
+    }
+  }, [router]);
+
   // centralized fetch — auto refreshes token on 401
   const auth_fetch = useCallback(
     async (endpoint: string, options?: RequestInit): Promise<Response> => {
@@ -113,7 +125,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       return res;
     },
-    [router],
+    [router, logout],
   );
 
   const refresh_user = useCallback(async () => {
@@ -140,19 +152,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       set_loading(false);
     };
     init();
-  }, [user]);
-
-  const logout = useCallback(async () => {
-    try {
-      await fetch(`${API_URL}/api/auth/logout`, {
-        method: "POST",
-        credentials: "include",
-      });
-    } finally {
-      set_user(null);
-      router.push("/auth/login");
-    }
-  }, [router]);
+  }, [pathname]);
 
   return (
     <AuthContext.Provider value={{ user, loading, logout, auth_fetch }}>
