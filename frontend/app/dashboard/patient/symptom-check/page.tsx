@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/auth_context";
-
+import Dialog from "@/components/dialog";
 interface Message {
   id: string;
   role: "user" | "assistant";
@@ -37,6 +37,16 @@ export default function SymptomCheckPage() {
   const [loading, set_loading] = useState(false);
   const [result, set_result] = useState<DiagnosisResult | null>(null);
   const bottom_ref = useRef<HTMLDivElement>(null);
+  const [dialog, set_dialog] = useState<{
+    open: boolean;
+    type: "error" | "success" | "info";
+    message: string;
+    auto_close_ms?: number;
+  }>({
+    open: false,
+    type: "error",
+    message: "",
+  });
 
   useEffect(() => {
     bottom_ref.current?.scrollIntoView({ behavior: "smooth" });
@@ -76,6 +86,11 @@ export default function SymptomCheckPage() {
             timestamp: new Date(),
           },
         ]);
+        set_dialog({
+          open: true,
+          type: "error",
+          message: data.message || `Error ${res.status}: con respond now`,
+        });
         return;
       }
 
@@ -91,7 +106,7 @@ export default function SymptomCheckPage() {
       ]);
 
       set_result(data.data);
-    } catch {
+    } catch (err: any) {
       set_messages((prev) => [
         ...prev,
         {
@@ -101,6 +116,11 @@ export default function SymptomCheckPage() {
           timestamp: new Date(),
         },
       ]);
+      set_dialog({
+        open: true,
+        type: "error",
+        message: err?.message || "Network error. Please check your connection.",
+      });
     } finally {
       set_loading(false);
     }
@@ -674,6 +694,13 @@ export default function SymptomCheckPage() {
           30% { transform: translateY(-4px); }
         }
       `}</style>
+      <Dialog
+        open={dialog.open}
+        type={dialog.type}
+        message={dialog.message}
+        auto_close_ms={dialog.auto_close_ms}
+        on_close={() => set_dialog((d) => ({ ...d, open: false }))}
+      />
     </div>
   );
 }

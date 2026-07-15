@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/auth_context";
-
+import Dialog from "@/components/dialog";
 interface Appointment {
   id: string;
   reason: string;
@@ -35,16 +35,42 @@ export default function AppointmentsPage() {
   const [loading, set_loading] = useState(true);
   const [filter, set_filter] = useState("ALL");
   const [cancelling, set_cancelling] = useState<string | null>(null);
+  const [dialog, set_dialog] = useState<{
+    open: boolean;
+    type: "error" | "success" | "info";
+    message: string;
+    auto_close_ms?: number;
+  }>({
+    open: false,
+    type: "error",
+    message: "",
+  });
 
   useEffect(() => {
     const fetch_appointments = async () => {
       try {
-        const res = await auth_fetch(`/api/appointments/patient_appointments`);
+        const res = await auth_fetch(`/api/appointment/patient_appointments`);
 
         const data = await res.json();
+        if (!res.ok) {
+          set_dialog({
+            open: true,
+            type: "error",
+            message:
+              data.message ||
+              `Error ${res.status}: could not load appointments`,
+          });
+          return;
+        }
+
         set_appointments(data.data || []);
-      } catch {
-        router.push("/auth/login");
+      } catch (err: any) {
+        set_dialog({
+          open: true,
+          type: "error",
+          message:
+            err?.message || "Network error. Please check your connection.",
+        });
       } finally {
         set_loading(false);
       }
@@ -56,9 +82,26 @@ export default function AppointmentsPage() {
     if (!confirm("Are you sure you want to cancel this appointment?")) return;
     set_cancelling(id);
     try {
-      await auth_fetch(`/api/appointments/cancel_appointment${id}`, {
+      const res = await auth_fetch(`/api/appointment/cancel_appointment${id}`, {
         method: "DELETE",
       });
+      const data = await res.json();
+      if (res.ok) {
+        set_dialog({
+          open: true,
+          type: "success",
+          message: "Successfully deleted",
+          auto_close_ms: 1500,
+        });
+      } else {
+        set_dialog({
+          open: true,
+          type: "error",
+          message:
+            data.message || `Error ${res.status}: could not load appointments`,
+        });
+        return;
+      }
       set_appointments((prev) => prev.filter((a) => a.id !== id));
     } catch {
       alert("Something went wrong");
@@ -516,6 +559,13 @@ export default function AppointmentsPage() {
           </div>
         )}
       </div>
+      <Dialog
+        open={dialog.open}
+        type={dialog.type}
+        message={dialog.message}
+        auto_close_ms={dialog.auto_close_ms}
+        on_close={() => set_dialog((d) => ({ ...d, open: false }))}
+      />
     </div>
   );
 }

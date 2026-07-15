@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/auth_context";
-
+import Dialog from "@/components/dialog";
 interface HealthRecord {
   id: string;
   symptoms: string[];
@@ -23,17 +23,41 @@ export default function HealthRecordsPage() {
   const [records, set_records] = useState<HealthRecord[]>([]);
   const [loading, set_loading] = useState(true);
   const [selected, set_selected] = useState<HealthRecord | null>(null);
-
+  const [dialog, set_dialog] = useState<{
+    open: boolean;
+    type: "error" | "success" | "info";
+    message: string;
+    auto_close_ms?: number;
+  }>({
+    open: false,
+    type: "error",
+    message: "",
+  });
   useEffect(() => {
     const fetch_records = async () => {
       try {
-        const res = await auth_fetch(`/api/patients/records`);
+        const res = await auth_fetch(`/api/patient/health-records`);
 
         const data = await res.json();
+        if (!res.ok) {
+          set_dialog({
+            open: true,
+            type: "error",
+            message:
+              data.message || `Error ${res.status}: could not load records`,
+          });
+          return;
+        }
+
         set_records(data.data || []);
         if (data.data?.length > 0) set_selected(data.data[0]);
-      } catch {
-        router.push("/auth/login");
+      } catch (err: any) {
+        set_dialog({
+          open: true,
+          type: "error",
+          message:
+            err?.message || "Network error. Please check your connection.",
+        });
       } finally {
         set_loading(false);
       }
@@ -524,6 +548,13 @@ export default function HealthRecordsPage() {
           </div>
         )}
       </div>
+      <Dialog
+        open={dialog.open}
+        type={dialog.type}
+        message={dialog.message}
+        auto_close_ms={dialog.auto_close_ms}
+        on_close={() => set_dialog((d) => ({ ...d, open: false }))}
+      />
     </div>
   );
 }

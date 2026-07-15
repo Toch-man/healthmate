@@ -5,12 +5,25 @@ import Link from "next/link";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { useAuth } from "@/app/context/auth_context";
 import { useRouter } from "next/navigation";
+import Dialog from "@/components/dialog";
+
 export default function LoginPage() {
   const router = useRouter();
   const [show_password, set_show_password] = useState(false);
   const [loading, set_loading] = useState(false);
   const [form, set_form] = useState({ email: "", password: "" });
   const { auth_fetch } = useAuth();
+  const [dialog, set_dialog] = useState<{
+    open: boolean;
+    type: "error" | "success" | "info";
+    message: string;
+    auto_close_ms?: number;
+    on_close?: () => {};
+  }>({
+    open: false,
+    type: "error",
+    message: "",
+  });
 
   const handle_change = (e: React.ChangeEvent<HTMLInputElement>) => {
     set_form({ ...form, [e.target.name]: e.target.value });
@@ -30,9 +43,21 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        alert(data.message);
+        set_dialog({
+          open: true,
+          type: "error",
+          message: data.message || `Error ${res.status}: could not login`,
+        });
         return;
       }
+      set_dialog({
+        open: true,
+        type: "success",
+        message: "Logged in successfully! Redirecting...",
+        auto_close_ms: 1500,
+      });
+
+      // separately, trigger the redirect when it closes:
 
       // redirect based on role
       if (data.user.role === "PATIENT") router.push("/dashboard/patient");
@@ -196,6 +221,13 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
+      <Dialog
+        open={dialog.open}
+        type={dialog.type}
+        message={dialog.message}
+        auto_close_ms={dialog.auto_close_ms}
+        on_close={() => set_dialog((d) => ({ ...d, open: false }))}
+      />
     </div>
   );
 }

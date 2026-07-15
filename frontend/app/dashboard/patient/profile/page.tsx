@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/auth_context";
-
+import Dialog from "@/components/dialog";
 interface PatientProfile {
   first_name: string;
   last_name: string;
@@ -42,13 +42,28 @@ export default function PatientProfilePage() {
     medications: "",
     conditions: "",
   });
+  const [dialog, set_dialog] = useState<{
+    open: boolean;
+    type: "error" | "success" | "info";
+    message: string;
+    auto_close_ms?: number;
+  }>({
+    open: false,
+    type: "error",
+    message: "",
+  });
 
   useEffect(() => {
     const fetch_profile = async () => {
       try {
         if (user!.patient) set_form(user!.patient);
-      } catch {
-        router.push("/auth/login");
+      } catch (err: any) {
+        set_dialog({
+          open: true,
+          type: "error",
+          message:
+            err?.message || "Network error. Please check your connection.",
+        });
       } finally {
         set_loading(false);
       }
@@ -101,15 +116,28 @@ export default function PatientProfilePage() {
   const handle_save = async () => {
     set_saving(true);
     try {
-      const res = await auth_fetch(`/api/patients/update_profile`, {
+      const res = await auth_fetch(`/api/patient/update_profile`, {
         method: "PATCH",
 
         body: JSON.stringify(form),
       });
-      if (res.ok) {
-        set_success(true);
-        setTimeout(() => set_success(false), 3000);
+      const data = await res.json();
+      if (!res.ok) {
+        set_dialog({
+          open: true,
+          type: "error",
+          message: data.message || `Error ${res.status}: could not update`,
+        });
+        return;
       }
+      set_success(true);
+      set_dialog({
+        open: true,
+        type: "success",
+        message: data.message || `profile updated`,
+      });
+      return;
+      setTimeout(() => set_success(false), 3000);
     } catch {
       alert("Something went wrong");
     } finally {
@@ -644,6 +672,13 @@ export default function PatientProfilePage() {
           </div>
         </div>
       </div>
+      <Dialog
+        open={dialog.open}
+        type={dialog.type}
+        message={dialog.message}
+        auto_close_ms={dialog.auto_close_ms}
+        on_close={() => set_dialog((d) => ({ ...d, open: false }))}
+      />
     </div>
   );
 }

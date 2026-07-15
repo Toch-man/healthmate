@@ -23,7 +23,7 @@ export default function NotificationsPage() {
   useEffect(() => {
     const fetch_notifications = async () => {
       try {
-        const res = await auth_fetch(`/api/patients/notifications`, {
+        const res = await auth_fetch(`/api/notifications`, {
           method: "GET",
         });
         if (res.status === 401) {
@@ -47,7 +47,7 @@ export default function NotificationsPage() {
       prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
     );
     await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/patients/notifications/${id}/read`,
+      `${process.env.NEXT_PUBLIC_API_URL}/api/notifications/${id}/read`,
       { method: "PATCH", credentials: "include" },
     );
   }, []);
