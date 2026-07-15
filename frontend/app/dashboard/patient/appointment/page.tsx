@@ -39,9 +39,7 @@ export default function AppointmentsPage() {
   useEffect(() => {
     const fetch_appointments = async () => {
       try {
-        const res = await auth_fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/appointments/patient_appointments`,
-        );
+        const res = await auth_fetch(`/api/appointments/patient_appointments`);
 
         const data = await res.json();
         set_appointments(data.data || []);
@@ -58,10 +56,9 @@ export default function AppointmentsPage() {
     if (!confirm("Are you sure you want to cancel this appointment?")) return;
     set_cancelling(id);
     try {
-      await auth_fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/appointments/cancel_appointment${id}`,
-        { method: "DELETE" },
-      );
+      await auth_fetch(`/api/appointments/cancel_appointment${id}`, {
+        method: "DELETE",
+      });
       set_appointments((prev) => prev.filter((a) => a.id !== id));
     } catch {
       alert("Something went wrong");

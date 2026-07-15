@@ -101,14 +101,11 @@ export default function PatientProfilePage() {
   const handle_save = async () => {
     set_saving(true);
     try {
-      const res = await auth_fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/patients/update_profile`,
-        {
-          method: "PATCH",
+      const res = await auth_fetch(`/api/patients/update_profile`, {
+        method: "PATCH",
 
-          body: JSON.stringify(form),
-        },
-      );
+        body: JSON.stringify(form),
+      });
       if (res.ok) {
         set_success(true);
         setTimeout(() => set_success(false), 3000);

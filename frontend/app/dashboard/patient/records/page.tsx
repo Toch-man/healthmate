@@ -27,9 +27,7 @@ export default function HealthRecordsPage() {
   useEffect(() => {
     const fetch_records = async () => {
       try {
-        const res = await auth_fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/patients/records`,
-        );
+        const res = await auth_fetch(`/api/patients/records`);
 
         const data = await res.json();
         set_records(data.data || []);

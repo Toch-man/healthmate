@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/app/context/auth_context";
 
 interface Notification {
   id: string;
@@ -14,6 +15,7 @@ interface Notification {
 
 export default function NotificationsPage() {
   const router = useRouter();
+  const { auth_fetch } = useAuth();
   const [notifications, set_notifications] = useState<Notification[]>([]);
   const [loading, set_loading] = useState(true);
   const [filter, set_filter] = useState<"ALL" | "UNREAD">("ALL");
@@ -21,10 +23,9 @@ export default function NotificationsPage() {
   useEffect(() => {
     const fetch_notifications = async () => {
       try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/patients/notifications`,
-          { credentials: "include" },
-        );
+        const res = await auth_fetch(`/api/patients/notifications`, {
+          method: "GET",
+        });
         if (res.status === 401) {
           router.push("/auth/login");
           return;
