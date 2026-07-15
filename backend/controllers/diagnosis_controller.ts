@@ -111,7 +111,7 @@ export const run_diagnosis = async (
 
     // send diagnosis back to gemini for explanation
     const explanation_prompt = `
-      A patient in Nigeria described these symptoms: ${symptoms.join(", ")}
+      A patient described these symptoms: ${symptoms.join(", ")}
       Duration: ${duration}
       Severity: ${severity}
       

@@ -76,10 +76,18 @@ export default function NotificationsPage() {
   );
 
   const nav_items = [
-    { label: "Dashboard", icon: "🏠", href: "/patient/dashboard" },
-    { label: "Symptom check", icon: "🩺", href: "/patient/symptom-check" },
-    { label: "Appointments", icon: "📅", href: "/patient/appointments" },
-    { label: "Health records", icon: "📋", href: "/patient/records" },
+    { label: "Dashboard", icon: "🏠", href: "/dashboard/patient" },
+    {
+      label: "Symptom check",
+      icon: "🩺",
+      href: "/dashboard/patient/symptom-check",
+    },
+    {
+      label: "Appointments",
+      icon: "📅",
+      href: "dashboard/patient/appointments",
+    },
+    { label: "Health records", icon: "📋", href: "/dashboard/patient/records" },
     {
       label: "Notifications",
       icon: "🔔",

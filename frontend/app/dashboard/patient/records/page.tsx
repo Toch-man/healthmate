@@ -54,17 +54,29 @@ export default function HealthRecordsPage() {
   };
 
   const nav_items = [
-    { label: "Dashboard", icon: "🏠", href: "/patient/dashboard" },
-    { label: "Symptom check", icon: "🩺", href: "/patient/symptom-check" },
-    { label: "Appointments", icon: "📅", href: "/patient/appointments" },
+    { label: "Dashboard", icon: "🏠", href: "/dashboard/patient" },
+    {
+      label: "Symptom check",
+      icon: "🩺",
+      href: "/dashboard/patient/symptom-check",
+    },
+    {
+      label: "Appointments",
+      icon: "📅",
+      href: "/dashboard/patient/appointment",
+    },
     {
       label: "Health records",
       icon: "📋",
-      href: "/patient/records",
+      href: "/dashboard/patient/records",
       active: true,
     },
-    { label: "Notifications", icon: "🔔", href: "/patient/notifications" },
-    { label: "Profile", icon: "👤", href: "/patient/profile" },
+    {
+      label: "Notifications",
+      icon: "🔔",
+      href: "/dashboard/patient/notifications",
+    },
+    { label: "Profile", icon: "👤", href: "/dashboard/patient/profile" },
   ];
 
   if (loading)
@@ -174,7 +186,7 @@ export default function HealthRecordsPage() {
             </div>
           </div>
           <Link
-            href="/patient/symptom-check"
+            href="/dashboard/patient/symptom-check"
             style={{
               padding: "8px 16px",
               background: "#1B2B6B",
@@ -198,7 +210,7 @@ export default function HealthRecordsPage() {
               Start a symptom check to see your results here
             </div>
             <Link
-              href="/patient/symptom-check"
+              href="/dashboard/patient/symptom-check"
               style={{
                 display: "inline-block",
                 padding: "9px 20px",
@@ -477,7 +489,7 @@ export default function HealthRecordsPage() {
 
                   <div style={{ display: "flex", gap: 10 }}>
                     <Link
-                      href="/patient/appointments/book"
+                      href="/dashboard/patient/appointment/book"
                       style={{
                         flex: 1,
                         padding: "10px",
@@ -493,7 +505,7 @@ export default function HealthRecordsPage() {
                       Book a doctor
                     </Link>
                     <Link
-                      href="/patient/symptom-check"
+                      href="/dashboard/patient/symptom-check"
                       style={{
                         flex: 1,
                         padding: "10px",

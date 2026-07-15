@@ -97,17 +97,25 @@ export default function AppointmentsPage() {
   };
 
   const nav_items = [
-    { label: "Dashboard", icon: "🏠", href: "/patient/dashboard" },
-    { label: "Symptom check", icon: "🩺", href: "/patient/symptom-check" },
+    { label: "Dashboard", icon: "🏠", href: "/dashboard/patient" },
+    {
+      label: "Symptom check",
+      icon: "🩺",
+      href: "/dashboard/patient/symptom-check",
+    },
     {
       label: "Appointments",
       icon: "📅",
-      href: "/patient/appointments",
+      href: "/dashboard/patient/appointments",
       active: true,
     },
-    { label: "Health records", icon: "📋", href: "/patient/records" },
-    { label: "Notifications", icon: "🔔", href: "/patient/notifications" },
-    { label: "Profile", icon: "👤", href: "/patient/profile" },
+    { label: "Health records", icon: "📋", href: "/dashboard/patient/records" },
+    {
+      label: "Notifications",
+      icon: "🔔",
+      href: "/dashboard/patient/notifications",
+    },
+    { label: "Profile", icon: "👤", href: "/dashboard/patient/profile" },
   ];
 
   const filters = [

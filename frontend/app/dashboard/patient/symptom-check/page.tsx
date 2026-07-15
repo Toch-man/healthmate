@@ -57,7 +57,7 @@ export default function SymptomCheckPage() {
     set_loading(true);
 
     try {
-      const res = await auth_fetch(`/api/diagnosis/analyze`, {
+      const res = await auth_fetch(`/api/diagnosis/chat`, {
         method: "POST",
 
         body: JSON.stringify({ raw_input: input }),
@@ -117,17 +117,25 @@ export default function SymptomCheckPage() {
   };
 
   const nav_items = [
-    { label: "Dashboard", icon: "🏠", href: "/patient/dashboard" },
+    { label: "Dashboard", icon: "🏠", href: "/dashboard/patient" },
     {
       label: "Symptom check",
       icon: "🩺",
-      href: "/patient/symptom-check",
+      href: "/dashboard/patient/symptom-check",
       active: true,
     },
-    { label: "Appointments", icon: "📅", href: "/patient/appointments" },
-    { label: "Health records", icon: "📋", href: "/patient/records" },
-    { label: "Notifications", icon: "🔔", href: "/patient/notifications" },
-    { label: "Profile", icon: "👤", href: "/patient/profile" },
+    {
+      label: "Appointments",
+      icon: "📅",
+      href: "/dashboard/patient/appointment",
+    },
+    { label: "Health records", icon: "📋", href: "/dashboard/patient/records" },
+    {
+      label: "Notifications",
+      icon: "🔔",
+      href: "/dashboard/patient/notifications",
+    },
+    { label: "Profile", icon: "👤", href: "/dashboard/patient/profile" },
   ];
 
   return (
@@ -220,7 +228,7 @@ export default function SymptomCheckPage() {
             </div>
           </div>
           <Link
-            href="/patient/records"
+            href="/dashboard/patient/records"
             style={{
               fontSize: 13,
               color: "#1B2B6B",
@@ -612,7 +620,7 @@ export default function SymptomCheckPage() {
                   Want to speak to a doctor?
                 </div>
                 <Link
-                  href="/patient/appointments/book"
+                  href="/dashboard/patient/appointment/book"
                   style={{
                     display: "block",
                     padding: "8px 12px",

@@ -142,25 +142,29 @@ export default function BookAppointmentPage() {
         </div>
         <div style={{ padding: "1rem 0", flex: 1 }}>
           {[
-            { label: "Dashboard", icon: "🏠", href: "/patient/dashboard" },
+            { label: "Dashboard", icon: "🏠", href: "/dashboard/patient" },
             {
               label: "Symptom check",
               icon: "🩺",
-              href: "/patient/symptom-check",
+              href: "/dashboard/patient/symptom-check",
             },
             {
               label: "Appointments",
               icon: "📅",
-              href: "/patient/appointments",
+              href: "/dashboard/patient/appointments",
               active: true,
             },
-            { label: "Health records", icon: "📋", href: "/patient/records" },
+            {
+              label: "Health records",
+              icon: "📋",
+              href: "/dashboard/patient/records",
+            },
             {
               label: "Notifications",
               icon: "🔔",
-              href: "/patient/notifications",
+              href: "/dashboard/patient/notifications",
             },
-            { label: "Profile", icon: "👤", href: "/patient/profile" },
+            { label: "Profile", icon: "👤", href: "dashboard/patient/profile" },
           ].map((item: any) => (
             <Link
               key={item.label}
