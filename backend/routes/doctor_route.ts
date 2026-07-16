@@ -16,7 +16,7 @@ router.get(
 );
 router.get("/doctor/:id", authenticate, doctor_controller.get_doctor_by_id);
 router.get("/doctors", authenticate, doctor_controller.get_all_doctors);
-router.post(
+router.patch(
   "/update_doctor_profile",
   authenticate,
   role_allowed("DOCTOR"),

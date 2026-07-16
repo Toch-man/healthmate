@@ -23,7 +23,7 @@ export default function DoctorNotificationsPage() {
   useEffect(() => {
     const fetch_notifications = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/patients/notifications`, {
+        const res = await fetch(`${API_URL}/api/notifications`, {
           credentials: "include",
         });
         if (res.status === 401) {
@@ -45,7 +45,7 @@ export default function DoctorNotificationsPage() {
     set_notifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
     );
-    await fetch(`${API_URL}/api/patients/notifications/${id}/read`, {
+    await fetch(`${API_URL}/api/notifications/${id}/read`, {
       method: "PATCH",
       credentials: "include",
     });
@@ -53,7 +53,7 @@ export default function DoctorNotificationsPage() {
 
   const mark_all_read = useCallback(async () => {
     set_notifications((prev) => prev.map((n) => ({ ...n, read: true })));
-    await fetch(`${API_URL}/api/patients/notifications/read-all`, {
+    await fetch(`${API_URL}/api/notifications/read-all`, {
       method: "PATCH",
       credentials: "include",
     });

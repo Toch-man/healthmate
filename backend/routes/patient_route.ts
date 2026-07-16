@@ -11,15 +11,32 @@ router.get(
   patient_controller.patient_profile,
 );
 
-// patient_route.ts
+router.patch(
+  "/update_profile",
+  authenticate,
+  role_allowed("PATIENT"),
+  patient_controller.update_patient_profile,
+);
+
 router.get(
   "/health-records",
   authenticate,
-  role_allowed("PATIENT"),
+  role_allowed("PATIENT", "DOCTOR", "HOSPITAL"),
   patient_controller.get_health_records,
 );
-//comlete this route using the ones in the UI
-//update_profile
-//records
+
+router.get(
+  "/health-records/:id",
+  authenticate,
+  role_allowed("PATIENT", "DOCTOR", "HOSPITAL"),
+  patient_controller.get_health_record,
+);
+
+router.get(
+  "/doctors",
+  authenticate,
+  role_allowed("PATIENT"),
+  patient_controller.get_available_doctors,
+);
 
 export default router;

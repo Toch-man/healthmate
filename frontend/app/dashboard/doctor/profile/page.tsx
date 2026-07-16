@@ -84,21 +84,18 @@ export default function DoctorProfilePage() {
   const handle_save = async () => {
     set_saving(true);
     try {
-      const res = await auth_fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/doctors_profile`,
-        {
-          method: "PATCH",
+      const res = await auth_fetch(`/api/doctors/update_doctor_profile`, {
+        method: "PATCH",
 
-          body: JSON.stringify({
-            first_name: form.first_name,
-            last_name: form.last_name,
-            phone: form.phone,
-            bio: form.bio,
-            location: form.location,
-            available: form.available,
-          }),
-        },
-      );
+        body: JSON.stringify({
+          first_name: form.first_name,
+          last_name: form.last_name,
+          phone: form.phone,
+          bio: form.bio,
+          location: form.location,
+          available: form.available,
+        }),
+      });
       if (res.ok) {
         set_success(true);
         setTimeout(() => set_success(false), 3000);

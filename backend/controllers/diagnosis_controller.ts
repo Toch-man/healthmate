@@ -8,15 +8,30 @@ import {
   SYSTEM_PROMPT,
 } from "../config/diagnosis_helpers.ts";
 
-// initialize gemini
 const genai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 const gemini = genai.getGenerativeModel({ model: "gemini-pro" });
 
-// store conversation per patient
-// key = patient_id, value = message history
+// in-memory cache of gemini-format history, backed by the database
 const conversation: Record<string, any[]> = {};
 
-// CHAT ENDPOINT — agent loop
+// pulls saved messages from DB into memory if this patient's history isn't cached
+// (handles server restarts, since in-memory alone is wiped then)
+async function load_history(patient_id: string) {
+  if (conversation[patient_id]) return conversation[patient_id];
+
+  const saved = await prisma.chatMessage.findMany({
+    where: { patient_id },
+    orderBy: { createdAt: "asc" },
+  });
+
+  conversation[patient_id] = saved.map((m) => ({
+    role: m.role,
+    parts: [{ text: m.content }],
+  }));
+
+  return conversation[patient_id];
+}
+
 export const chat = async (req: Request, res: Response) => {
   try {
     const patient_id = req.user?.id;
@@ -29,14 +44,8 @@ export const chat = async (req: Request, res: Response) => {
       });
     }
 
-    // get or create conversation history for this patient
-    if (!conversation[patient_id!]) {
-      conversation[patient_id!] = [];
-    }
-    const history = conversation[patient_id!];
+    const history = await load_history(patient_id!);
 
-    // build chat with full history
-    // this is how gemini remembers the conversation
     const chat_session = gemini.startChat({
       history: [
         { role: "user", parts: [{ text: SYSTEM_PROMPT }] },
@@ -44,34 +53,29 @@ export const chat = async (req: Request, res: Response) => {
           role: "model",
           parts: [{ text: "Understood. I will collect symptoms carefully." }],
         },
-        // then actual conversation so far
         ...history,
       ],
     });
 
-    // add patient message to history
-    history.push({
-      role: "user",
-      parts: [{ text: message }],
-    });
-
-    // send to gemini
     const result = await chat_session.sendMessage(message);
     const gemini_reply = result.response.text();
 
-    // check if gemini has collected enough symptoms
+    // persist the patient's message
+    await prisma.chatMessage.create({
+      data: { patient_id: patient_id!, role: "user", content: message },
+    });
+    history.push({ role: "user", parts: [{ text: message }] });
+
     if (gemini_reply.includes("DIAGNOSIS_READY")) {
       return await run_diagnosis(patient_id!, gemini_reply, res);
     }
 
-    // gemini is still asking questions
-    // add its reply to history so next message has context
-    history.push({
-      role: "model",
-      parts: [{ text: gemini_reply }],
+    // persist gemini's follow-up question
+    await prisma.chatMessage.create({
+      data: { patient_id: patient_id!, role: "model", content: gemini_reply },
     });
+    history.push({ role: "model", parts: [{ text: gemini_reply }] });
 
-    // send question back to patient
     return res.status(200).json({
       success: true,
       type: "question",
@@ -85,7 +89,32 @@ export const chat = async (req: Request, res: Response) => {
   }
 };
 
-// RUN DIAGNOSIS — called when gemini is done
+// GET /api/diagnosis/history — rehydrates the chat on page load/refresh
+export const get_history = async (req: Request, res: Response) => {
+  try {
+    const patient_id = req.user?.id;
+
+    const messages = await prisma.chatMessage.findMany({
+      where: { patient_id },
+      orderBy: { createdAt: "asc" },
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: messages.map((m) => ({
+        id: m.id,
+        role: m.role === "model" ? "assistant" : "user",
+        content: m.content,
+        timestamp: m.createdAt,
+      })),
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "could not load chat history",
+    });
+  }
+};
 
 export const run_diagnosis = async (
   patient_id: string,
@@ -93,36 +122,27 @@ export const run_diagnosis = async (
   res: Response,
 ) => {
   try {
-    // extract the JSON gemini returned
     const json_start = gemini_reply.indexOf("{");
-    const json_end = gemini_reply.lastIndexOf("}") + 1; // ← fixed: lastIndexOf + 1
+    const json_end = gemini_reply.lastIndexOf("}") + 1;
     const json_string = gemini_reply.slice(json_start, json_end);
     const { symptoms, duration, severity } = JSON.parse(json_string);
 
-    // send symptoms to tensorflow model
     const tf_results = predict_disease(symptoms);
-    // tf_results = [
-    //   { disease: "Pneumonia", confidence: 0.87, percentage: "87.0%", ... },
-    //   { disease: "Bronchitis", confidence: 0.09, ... },
-    //   { disease: "COVID-19", confidence: 0.02, ... },
-    // ]
-
     const top = tf_results[0];
 
-    // send diagnosis back to gemini for explanation
     const explanation_prompt = `
       A patient described these symptoms: ${symptoms.join(", ")}
       Duration: ${duration}
       Severity: ${severity}
-      
+
       Medical analysis shows: ${top.disease} (${top.percentage} confidence)
-      
+
       Write a SHORT friendly explanation (max 80 words):
       - What this condition likely is
       - Why their symptoms match
       - How urgent it is to see a doctor
       - One thing they can do right now
-      
+
       End with: "I have found doctors who can help you nearby."
       Use simple language. Be empathetic. No medical jargon.
     `;
@@ -130,7 +150,6 @@ export const run_diagnosis = async (
     const explanation_result = await gemini.generateContent(explanation_prompt);
     const explanation = explanation_result.response.text();
 
-    // find matching doctors from DB
     const specialization = get_specialization(top.disease);
 
     const doctors = await prisma.doctor.findMany({
@@ -163,7 +182,6 @@ export const run_diagnosis = async (
       take: 3,
     });
 
-    // save to DB
     await prisma.healthRecord.create({
       data: {
         patient_id,
@@ -179,22 +197,23 @@ export const run_diagnosis = async (
       },
     });
 
-    // clear conversation — session is done ← fixed: was missing
+    // session complete — clear both memory cache and persisted chat history
     delete conversation[patient_id];
+    await prisma.chatMessage.deleteMany({ where: { patient_id } });
 
     return res.status(200).json({
       success: true,
       type: "diagnosis",
-      explanation,
-      diagnosis: {
-        top: top.disease,
-        confidence: top.percentage,
-        description: top.description,
-        precautions: top.precautions,
-        all_results: tf_results,
+      data: {
+        diagnosis: top.disease,
+        severity: map_severity(severity),
+        explanation,
+        immediateAdvice: top.precautions[0] || "See a doctor",
+        warningSignss: top.precautions,
+        symptoms,
+        recommended_doctors: doctors,
+        recommended_hospitals: hospitals,
       },
-      recommended_doctors: doctors,
-      recommended_hospitals: hospitals,
     });
   } catch (error) {
     return res.status(500).json({

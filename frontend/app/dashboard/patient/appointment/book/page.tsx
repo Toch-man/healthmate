@@ -40,10 +40,9 @@ export default function BookAppointmentPage() {
         if (specialization_filter)
           params.set("specialization", specialization_filter);
 
-        const res = await auth_fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/patients/doctors?$/d{params}`,
-          { credentials: "include" },
-        );
+        const res = await auth_fetch(`/api/patients/doctors?$/d{params}`, {
+          credentials: "include",
+        });
         if (res.status === 401) {
           router.push("/auth/login");
           return;
@@ -67,7 +66,7 @@ export default function BookAppointmentPage() {
     set_booking(true);
     try {
       const res = await auth_fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/appointments/${selected_doctor.id}/book`,
+        `/api/appointments/book_appointment/${selected_doctor.id}`,
         {
           method: "POST",
 

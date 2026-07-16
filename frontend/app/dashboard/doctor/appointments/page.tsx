@@ -32,9 +32,7 @@ export default function DoctorAppointmentsPage() {
   useEffect(() => {
     const fetch_appointments = async () => {
       try {
-        const res = await auth_fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/appointments/doctor`,
-        );
+        const res = await auth_fetch(`/api/appointment/doctor`);
 
         const data = await res.json();
         set_appointments(data.data || []);
@@ -52,15 +50,12 @@ export default function DoctorAppointmentsPage() {
   const handle_status = useCallback(async (id: string, status: string) => {
     set_updating(true);
     try {
-      await auth_fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/appointments/appointment_status`,
-        {
-          method: "PATCH",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id, status }),
-        },
-      );
+      await auth_fetch(`/api/appointment/appointment_status`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, status }),
+      });
       set_appointments((prev) =>
         prev.map((a) => (a.id === id ? { ...a, status } : a)),
       );

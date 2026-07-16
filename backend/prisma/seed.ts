@@ -1,6 +1,5 @@
 import bcrypt from "bcrypt";
 import prisma from "../src/db.ts";
-import { create } from "domain";
 
 async function main() {
   const hash_password = await bcrypt.hash(process.env.ADMIN_PASSWORD!, 10);
@@ -22,10 +21,10 @@ async function main() {
   });
 
   console.log("admin created ", admin.email);
-
-  main()
-    .catch((err) => {
-      console.error(err);
-    })
-    .finally(() => prisma.$disconnect());
 }
+main()
+  .catch((err) => {
+    console.error(err);
+    process.exit(1);
+  })
+  .finally(() => prisma.$disconnect());

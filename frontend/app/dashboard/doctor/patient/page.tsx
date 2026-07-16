@@ -25,9 +25,7 @@ export default function DoctorPatientsPage() {
   useEffect(() => {
     const fetch_patients = async () => {
       try {
-        const res = await auth_fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/appointments/doctor`,
-        );
+        const res = await auth_fetch(`/api/appointment/doctor`);
 
         const data = await res.json();
 

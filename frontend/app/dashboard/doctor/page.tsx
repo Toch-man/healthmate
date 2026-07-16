@@ -42,9 +42,7 @@ export default function DoctorDashboard() {
   useEffect(() => {
     const fetch_data = async () => {
       try {
-        const apt_res = await auth_fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/appointments/doctor`,
-        );
+        const apt_res = await auth_fetch(`/api/appointment/doctor_profile`);
 
         const apt_data = await apt_res.json();
 
@@ -67,14 +65,11 @@ export default function DoctorDashboard() {
 
   const handle_appointment_status = async (id: string, status: string) => {
     try {
-      await auth_fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/appointments_status`,
-        {
-          method: "PATCH",
+      await auth_fetch(`/api/appointment/appointments_status`, {
+        method: "PATCH",
 
-          body: JSON.stringify({ id, status }),
-        },
-      );
+        body: JSON.stringify({ id, status }),
+      });
       set_appointments((prev) =>
         prev.map((a) => (a.id === id ? { ...a, status } : a)),
       );

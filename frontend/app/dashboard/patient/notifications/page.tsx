@@ -56,7 +56,7 @@ export default function NotificationsPage() {
   const mark_all_read = useCallback(async () => {
     set_notifications((prev) => prev.map((n) => ({ ...n, read: true })));
     await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/patients/notifications/read-all`,
+      `${process.env.NEXT_PUBLIC_API_URL}/api/notifications/read-all`,
       { method: "PATCH", credentials: "include" },
     );
   }, []);

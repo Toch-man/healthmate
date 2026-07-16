@@ -91,6 +91,7 @@ model Patient {
 
   healthHistory HealthRecord[]
   appointments  Appointment[]
+  chatMessages  ChatMessage[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -208,4 +209,13 @@ model Message {
   content        String
   read           Boolean     @default(false)
   createdAt      DateTime    @default(now())
+}
+
+model ChatMessage {
+  id         String   @id @default(cuid())
+  patient_id String
+  patient    Patient  @relation(fields: [patient_id], references: [id])
+  role       String   // "user" | "model"
+  content    String
+  createdAt  DateTime @default(now())
 }

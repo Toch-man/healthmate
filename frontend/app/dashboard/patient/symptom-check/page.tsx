@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/auth_context";
 import Dialog from "@/components/dialog";
+
 interface Message {
   id: string;
   role: "user" | "assistant";
@@ -19,22 +20,39 @@ interface DiagnosisResult {
   immediateAdvice: string;
   warningSignss: string[];
   symptoms: string[];
+  recommended_doctors: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    specialization: string;
+    location: string;
+    rating: number;
+    yearsExperience: number;
+  }[];
+  recommended_hospitals: {
+    id: string;
+    name: string;
+    address: string;
+    state: string;
+    phone: string;
+  }[];
 }
+
+const DEFAULT_GREETING: Message = {
+  id: "1",
+  role: "assistant",
+  content:
+    "Hello! I'm HealthMate's AI assistant. Please describe your symptoms and I'll help assess what might be going on. You can type in any language.",
+  timestamp: new Date(),
+};
 
 export default function SymptomCheckPage() {
   const router = useRouter();
   const { auth_fetch } = useAuth();
-  const [messages, set_messages] = useState<Message[]>([
-    {
-      id: "1",
-      role: "assistant",
-      content:
-        "Hello! I'm HealthMate's AI assistant. Please describe your symptoms and I'll help assess what might be going on. You can type in any language.",
-      timestamp: new Date(),
-    },
-  ]);
+  const [messages, set_messages] = useState<Message[]>([DEFAULT_GREETING]);
   const [input, set_input] = useState("");
   const [loading, set_loading] = useState(false);
+  const [history_loading, set_history_loading] = useState(true);
   const [result, set_result] = useState<DiagnosisResult | null>(null);
   const bottom_ref = useRef<HTMLDivElement>(null);
   const [dialog, set_dialog] = useState<{
@@ -47,6 +65,33 @@ export default function SymptomCheckPage() {
     type: "error",
     message: "",
   });
+
+  // rehydrate chat history on mount so a refresh doesn't wipe the conversation
+  useEffect(() => {
+    const load_history = async () => {
+      try {
+        const res = await auth_fetch("/api/diagnosis/history");
+        const data = await res.json();
+
+        if (res.ok && data.data?.length > 0) {
+          set_messages(
+            data.data.map((m: any) => ({
+              id: m.id,
+              role: m.role,
+              content: m.content,
+              timestamp: new Date(m.timestamp),
+            })),
+          );
+        }
+        // if no saved history, keep the default greeting already in state
+      } catch {
+        // silently keep default greeting — not worth a dialog for this
+      } finally {
+        set_history_loading(false);
+      }
+    };
+    load_history();
+  }, []);
 
   useEffect(() => {
     bottom_ref.current?.scrollIntoView({ behavior: "smooth" });
@@ -69,8 +114,7 @@ export default function SymptomCheckPage() {
     try {
       const res = await auth_fetch(`/api/diagnosis/chat`, {
         method: "POST",
-
-        body: JSON.stringify({ raw_input: input }),
+        body: JSON.stringify({ message: input }),
       });
 
       const data = await res.json();
@@ -89,12 +133,25 @@ export default function SymptomCheckPage() {
         set_dialog({
           open: true,
           type: "error",
-          message: data.message || `Error ${res.status}: con respond now`,
+          message: data.message || `Error ${res.status}: can't respond now`,
         });
         return;
       }
 
-      // add AI response message
+      if (data.type === "question") {
+        set_messages((prev) => [
+          ...prev,
+          {
+            id: Date.now().toString(),
+            role: "assistant",
+            content: data.message,
+            timestamp: new Date(),
+          },
+        ]);
+        return;
+      }
+
+      // data.type === "diagnosis"
       set_messages((prev) => [
         ...prev,
         {
@@ -279,71 +336,84 @@ export default function SymptomCheckPage() {
             {/* Messages */}
             <div style={{ flex: 1, overflowY: "auto", padding: "1.5rem" }}>
               <div style={{ maxWidth: 640, margin: "0 auto" }}>
-                {messages.map((msg) => (
+                {history_loading ? (
                   <div
-                    key={msg.id}
                     style={{
-                      display: "flex",
-                      justifyContent:
-                        msg.role === "user" ? "flex-end" : "flex-start",
-                      marginBottom: 16,
+                      textAlign: "center",
+                      padding: "2rem 0",
+                      fontSize: 13,
+                      color: "#6b7280",
                     }}
                   >
-                    {msg.role === "assistant" && (
-                      <div
-                        style={{
-                          width: 32,
-                          height: 32,
-                          borderRadius: "50%",
-                          background: "#1B2B6B",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: 14,
-                          marginRight: 10,
-                          flexShrink: 0,
-                        }}
-                      >
-                        🩺
-                      </div>
-                    )}
+                    Loading conversation...
+                  </div>
+                ) : (
+                  messages.map((msg) => (
                     <div
+                      key={msg.id}
                       style={{
-                        maxWidth: "75%",
-                        padding: "10px 14px",
-                        borderRadius:
-                          msg.role === "user"
-                            ? "12px 12px 2px 12px"
-                            : "12px 12px 12px 2px",
-                        background: msg.role === "user" ? "#1B2B6B" : "#fff",
-                        color: msg.role === "user" ? "#fff" : "#111",
-                        fontSize: 13,
-                        lineHeight: 1.6,
-                        border:
-                          msg.role === "assistant"
-                            ? "0.5px solid #e5e7eb"
-                            : "none",
+                        display: "flex",
+                        justifyContent:
+                          msg.role === "user" ? "flex-end" : "flex-start",
+                        marginBottom: 16,
                       }}
                     >
-                      {msg.content}
+                      {msg.role === "assistant" && (
+                        <div
+                          style={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: "50%",
+                            background: "#1B2B6B",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: 14,
+                            marginRight: 10,
+                            flexShrink: 0,
+                          }}
+                        >
+                          🩺
+                        </div>
+                      )}
                       <div
                         style={{
-                          fontSize: 11,
-                          marginTop: 4,
-                          color:
+                          maxWidth: "75%",
+                          padding: "10px 14px",
+                          borderRadius:
                             msg.role === "user"
-                              ? "rgba(255,255,255,0.6)"
-                              : "#9ca3af",
+                              ? "12px 12px 2px 12px"
+                              : "12px 12px 12px 2px",
+                          background: msg.role === "user" ? "#1B2B6B" : "#fff",
+                          color: msg.role === "user" ? "#fff" : "#111",
+                          fontSize: 13,
+                          lineHeight: 1.6,
+                          border:
+                            msg.role === "assistant"
+                              ? "0.5px solid #e5e7eb"
+                              : "none",
                         }}
                       >
-                        {msg.timestamp.toLocaleTimeString("en-GB", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
+                        {msg.content}
+                        <div
+                          style={{
+                            fontSize: 11,
+                            marginTop: 4,
+                            color:
+                              msg.role === "user"
+                                ? "rgba(255,255,255,0.6)"
+                                : "#9ca3af",
+                          }}
+                        >
+                          {msg.timestamp.toLocaleTimeString("en-GB", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
 
                 {loading && (
                   <div
@@ -620,55 +690,79 @@ export default function SymptomCheckPage() {
                 </div>
               )}
 
-              {/* CTA */}
-              <div
-                style={{
-                  padding: "12px",
-                  background: "#E6F1FB",
-                  borderRadius: 8,
-                  marginBottom: "1rem",
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: 13,
-                    color: "#0C447C",
-                    marginBottom: 8,
-                    fontWeight: 500,
-                  }}
-                >
-                  Want to speak to a doctor?
+              {/* Recommended doctors */}
+              {result.recommended_doctors?.length > 0 && (
+                <div style={{ marginBottom: "1rem" }}>
+                  <div
+                    style={{ fontSize: 12, color: "#6b7280", marginBottom: 6 }}
+                  >
+                    Recommended doctors
+                  </div>
+                  <div
+                    style={{ display: "flex", flexDirection: "column", gap: 8 }}
+                  >
+                    {result.recommended_doctors.map((doc) => (
+                      <Link
+                        key={doc.id}
+                        href={`/dashboard/patient/appointment/book?doctor_id=${doc.id}`}
+                        style={{
+                          display: "block",
+                          padding: "10px",
+                          border: "0.5px solid #e5e7eb",
+                          borderRadius: 8,
+                          textDecoration: "none",
+                          color: "#111",
+                        }}
+                      >
+                        <div style={{ fontSize: 13, fontWeight: 500 }}>
+                          Dr. {doc.first_name} {doc.last_name}
+                        </div>
+                        <div style={{ fontSize: 11, color: "#6b7280" }}>
+                          {doc.specialization} · {doc.location} · ⭐{" "}
+                          {doc.rating.toFixed(1)}
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
                 </div>
-                <Link
-                  href="/dashboard/patient/appointment/book"
-                  style={{
-                    display: "block",
-                    padding: "8px 12px",
-                    background: "#1B2B6B",
-                    color: "#fff",
-                    borderRadius: 8,
-                    fontSize: 12,
-                    textDecoration: "none",
-                    textAlign: "center",
-                    fontWeight: 500,
-                  }}
-                >
-                  Book an appointment
-                </Link>
-              </div>
+              )}
+
+              {/* Recommended hospitals */}
+              {result.recommended_hospitals?.length > 0 && (
+                <div style={{ marginBottom: "1rem" }}>
+                  <div
+                    style={{ fontSize: 12, color: "#6b7280", marginBottom: 6 }}
+                  >
+                    Nearby hospitals
+                  </div>
+                  <div
+                    style={{ display: "flex", flexDirection: "column", gap: 8 }}
+                  >
+                    {result.recommended_hospitals.map((h) => (
+                      <div
+                        key={h.id}
+                        style={{
+                          padding: "10px",
+                          border: "0.5px solid #e5e7eb",
+                          borderRadius: 8,
+                        }}
+                      >
+                        <div style={{ fontSize: 13, fontWeight: 500 }}>
+                          {h.name}
+                        </div>
+                        <div style={{ fontSize: 11, color: "#6b7280" }}>
+                          {h.address}, {h.state}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <button
                 onClick={() => {
                   set_result(null);
-                  set_messages([
-                    {
-                      id: "1",
-                      role: "assistant",
-                      content:
-                        "Hello! I'm HealthMate's AI assistant. Please describe your symptoms and I'll help assess what might be going on.",
-                      timestamp: new Date(),
-                    },
-                  ]);
+                  set_messages([DEFAULT_GREETING]);
                 }}
                 style={{
                   width: "100%",

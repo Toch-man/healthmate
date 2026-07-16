@@ -32,7 +32,7 @@ router.delete(
   authenticate,
   appointment_controller.cancel_appointment,
 );
-router.post(
+router.patch(
   "/appointment_status",
   authenticate,
   role_allowed("DOCTOR"),

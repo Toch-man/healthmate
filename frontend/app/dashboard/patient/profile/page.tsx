@@ -136,8 +136,8 @@ export default function PatientProfilePage() {
         type: "success",
         message: data.message || `profile updated`,
       });
-      return;
       setTimeout(() => set_success(false), 3000);
+      return;
     } catch {
       alert("Something went wrong");
     } finally {
