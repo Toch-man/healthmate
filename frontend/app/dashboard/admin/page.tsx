@@ -43,13 +43,9 @@ export default function AdminDashboard() {
     const fetch_data = async () => {
       try {
         const [docs_res, hosp_res, users_res] = await Promise.all([
-          auth_fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/admin/pending_doctors`,
-          ),
-          auth_fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/admin/pending_hospitals`,
-          ),
-          auth_fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/users`),
+          auth_fetch(`/api/admin/pending_doctors`),
+          auth_fetch(`/api/admin/pending_hospitals`),
+          auth_fetch(`/api/admin/users`),
         ]);
 
         const docs_data = await docs_res.json();
@@ -87,14 +83,11 @@ export default function AdminDashboard() {
 
   const handle_doctor_status = async (id: string, status: string) => {
     try {
-      await auth_fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/doctors_status/${id}`,
-        {
-          method: "PATCH",
+      await auth_fetch(`/api/admin/doctor_status/${id}`, {
+        method: "PATCH",
 
-          body: JSON.stringify({ status }),
-        },
-      );
+        body: JSON.stringify({ status }),
+      });
       set_pending_doctors((prev) => prev.filter((d) => d.id !== id));
     } catch {
       alert("Something went wrong");
@@ -103,14 +96,11 @@ export default function AdminDashboard() {
 
   const handle_hospital_status = async (id: string, status: string) => {
     try {
-      await auth_fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/hospitals_status/${id}`,
-        {
-          method: "PATCH",
+      await auth_fetch(`/api/admin/hospital_status/${id}`, {
+        method: "PATCH",
 
-          body: JSON.stringify({ status }),
-        },
-      );
+        body: JSON.stringify({ status }),
+      });
       set_pending_hospitals((prev) => prev.filter((h) => h.id !== id));
     } catch {
       alert("Something went wrong");

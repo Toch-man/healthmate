@@ -256,8 +256,8 @@ export const patient_signup = async (req: Request, res: Response) => {
     const existing_user = await prisma.user.findUnique({ where: { email } });
 
     if (existing_user)
-      return res.status(409).json({
-        success: true,
+      return res.status(400).json({
+        success: false,
         message: "email already exist",
       });
 
