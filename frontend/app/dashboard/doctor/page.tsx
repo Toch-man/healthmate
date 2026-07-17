@@ -408,7 +408,7 @@ export default function DoctorDashboard() {
                 Appointment requests
               </div>
               <Link
-                href="/doctor/appointments"
+                href="/dashboard/doctor/appointments"
                 style={{
                   fontSize: 12,
                   color: "#1B2B6B",
@@ -674,7 +674,7 @@ export default function DoctorDashboard() {
                 }}
               >
                 <Link
-                  href="/doctor/profile"
+                  href="/dashboard/doctor/profile"
                   style={{
                     fontSize: 12,
                     color: "#1B2B6B",

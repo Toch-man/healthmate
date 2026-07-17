@@ -27,6 +27,7 @@ export default function BookAppointmentPage() {
   const [selected_doctor, set_selected_doctor] = useState<Doctor | null>(null);
   const [search, set_search] = useState("");
   const [specialization_filter, set_specialization_filter] = useState("");
+
   const [form, set_form] = useState({
     reason: "",
     patient_brief: "",
@@ -40,7 +41,7 @@ export default function BookAppointmentPage() {
         if (specialization_filter)
           params.set("specialization", specialization_filter);
 
-        const res = await auth_fetch(`/api/patients/doctors?$/d{params}`, {
+        const res = await auth_fetch(`/api/patient/doctors?$/d{params}`, {
           credentials: "include",
         });
         if (res.status === 401) {

@@ -71,7 +71,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const pathname = usePathname();
   const [user, set_user] = useState<User | null>(null);
   const [loading, set_loading] = useState(true);
-  const PUBLIC_PAGES = ["/", "/auth/login", "/auth/signup"];
+  const PUBLIC_PAGES = ["/", "/auth/login", "/auth/sign_up"];
 
   const logout = useCallback(async () => {
     try {
@@ -117,6 +117,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         } else {
           // refresh failed — logout
           logout();
+          set_user(null);
 
           router.push("/auth/login");
           return res;
@@ -144,8 +145,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const init = async () => {
-      await refresh_user();
-      set_loading(false);
+      if (!PUBLIC_PAGES.includes(pathname) && !user && !loading) {
+        await refresh_user();
+        set_loading(false);
+      }
     };
     init();
   }, []);

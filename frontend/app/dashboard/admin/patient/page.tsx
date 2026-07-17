@@ -54,12 +54,15 @@ export default function AdminPatientsPage() {
   );
 
   const nav_items = [
-    { label: "Dashboard", icon: "🏠", href: "/admin/dashboard" },
-    { label: "Doctors", icon: "🩺", href: "/admin/doctors" },
-    { label: "Hospitals", icon: "🏥", href: "/admin/hospitals" },
-    { label: "Patients", icon: "👥", href: "/admin/patients", active: true },
-    { label: "Appointments", icon: "📅", href: "/admin/appointments" },
-    { label: "Settings", icon: "⚙️", href: "/admin/settings" },
+    { label: "Dashboard", icon: "🏠", href: "/dashboard/admin", active: true },
+    { label: "Doctors", icon: "🩺", href: "/dashboard/admin/doctor" },
+    { label: "Hospitals", icon: "🏥", href: "/dashboard//admin/hospital" },
+    { label: "Patients", icon: "👥", href: "/dashboard//admin/patient" },
+    {
+      label: "Appointments",
+      icon: "📅",
+      href: "/dashboard/admin/appointments",
+    },
   ];
 
   if (loading)

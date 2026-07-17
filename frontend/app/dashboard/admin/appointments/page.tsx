@@ -84,17 +84,15 @@ export default function AdminAppointmentsPage() {
   };
 
   const nav_items = [
-    { label: "Dashboard", icon: "🏠", href: "/dashboard/admin/dashboard" },
-    { label: "Doctors", icon: "🩺", href: "  /dashboard/admin/doctors" },
-    { label: "Hospitals", icon: "🏥", href: "/dashboard/admin/hospitals" },
-    { label: "Patients", icon: "👥", href: " /dashboard/admin/patients" },
+    { label: "Dashboard", icon: "🏠", href: "/dashboard/admin", active: true },
+    { label: "Doctors", icon: "🩺", href: "/dashboard/admin/doctor" },
+    { label: "Hospitals", icon: "🏥", href: "/dashboard//admin/hospital" },
+    { label: "Patients", icon: "👥", href: "/dashboard//admin/patient" },
     {
       label: "Appointments",
       icon: "📅",
-      href: "/admin/appointments",
-      active: true,
+      href: "/dashboard/admin/appointments",
     },
-    { label: "Settings", icon: "⚙️", href: "/admin/settings" },
   ];
 
   if (loading)

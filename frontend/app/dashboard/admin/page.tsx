@@ -108,12 +108,16 @@ export default function AdminDashboard() {
   };
 
   const nav_items = [
-    { label: "Dashboard", icon: "🏠", href: "/admin/dashboard", active: true },
-    { label: "Doctors", icon: "🩺", href: "/admin/doctors" },
-    { label: "Hospitals", icon: "🏥", href: "/admin/hospitals" },
-    { label: "Patients", icon: "👥", href: "/admin/patients" },
-    { label: "Appointments", icon: "📅", href: "/admin/appointments" },
-    { label: "Settings", icon: "⚙️", href: "/admin/settings" },
+    { label: "Dashboard", icon: "🏠", href: "/dashboard/admin", active: true },
+    { label: "Doctors", icon: "🩺", href: "/dashboard/admin/doctor" },
+    { label: "Hospitals", icon: "🏥", href: "/dashboard//admin/hospital" },
+    { label: "Patients", icon: "👥", href: "/dashboard//admin/patient" },
+    {
+      label: "Appointments",
+      icon: "📅",
+      href: "/dashboard/admin/appointments",
+    },
+    // { label: "Settings", icon: "⚙️", href: "/admin/settings" },
   ];
 
   const date_str = new Date().toLocaleDateString("en-GB", {
@@ -475,7 +479,7 @@ export default function AdminDashboard() {
                 ))}
                 {pending_doctors.length > 4 && (
                   <Link
-                    href="/admin/doctors"
+                    href="/dashboard/admin/doctors"
                     style={{
                       fontSize: 12,
                       color: "#1B2B6B",
@@ -641,6 +645,7 @@ export default function AdminDashboard() {
                     value:
                       (stats?.total_users || 0) -
                       (stats?.total_doctors || 0) -
+                      (stats?.total_doctors || 0) -
                       (stats?.total_hospitals || 0),
                   },
                   { label: "Doctors", value: stats?.total_doctors || 0 },
@@ -677,7 +682,7 @@ export default function AdminDashboard() {
                 }}
               >
                 <Link
-                  href="/admin/users"
+                  href="/dashboard/admin/users"
                   style={{
                     fontSize: 12,
                     color: "#1B2B6B",
