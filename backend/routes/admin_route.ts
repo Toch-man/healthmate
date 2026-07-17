@@ -16,13 +16,13 @@ router.get(
   role_allowed("ADMIN"),
   admin_controller.get_pending_hospitals,
 );
-router.put(
+router.patch(
   "/doctor_status/:id",
   authenticate,
   role_allowed("ADMIN"),
   admin_controller.update_doctor_status,
 );
-router.put(
+router.patch(
   "/hospital_status/:id",
   authenticate,
   role_allowed("ADMIN"),

@@ -32,9 +32,7 @@ export default function AdminDoctorsPage() {
   useEffect(() => {
     const fetch_users = async () => {
       try {
-        const res = await auth_fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/admin/users`,
-        );
+        const res = await auth_fetch(`/api/admin/users`);
 
         const data = await res.json();
         set_doctors(
@@ -57,14 +55,11 @@ export default function AdminDoctorsPage() {
   const handle_status = useCallback(async (id: string, status: string) => {
     set_updating(id);
     try {
-      await auth_fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/doctors_status/${id}`,
-        {
-          method: "PATCH",
+      await auth_fetch(`/api/admin/doctor_status/${id}`, {
+        method: "PATCH",
 
-          body: JSON.stringify({ status }),
-        },
-      );
+        body: JSON.stringify({ status }),
+      });
       set_doctors((prev) =>
         prev.map((d) => (d.id === id ? { ...d, status } : d)),
       );

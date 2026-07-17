@@ -28,7 +28,7 @@ export default function AdminAppointmentsPage() {
   useEffect(() => {
     const fetch_appointments = async () => {
       try {
-        const res = await auth_fetch(`${API_URL}/api/admin/appointments`, {
+        const res = await auth_fetch(`/api/admin/appointments`, {
           credentials: "include",
         });
 
@@ -84,10 +84,10 @@ export default function AdminAppointmentsPage() {
   };
 
   const nav_items = [
-    { label: "Dashboard", icon: "🏠", href: "/admin/dashboard" },
-    { label: "Doctors", icon: "🩺", href: "/admin/doctors" },
-    { label: "Hospitals", icon: "🏥", href: "/admin/hospitals" },
-    { label: "Patients", icon: "👥", href: "/admin/patients" },
+    { label: "Dashboard", icon: "🏠", href: "/dashboard/admin/dashboard" },
+    { label: "Doctors", icon: "🩺", href: "  /dashboard/admin/doctors" },
+    { label: "Hospitals", icon: "🏥", href: "/dashboard/admin/hospitals" },
+    { label: "Patients", icon: "👥", href: " /dashboard/admin/patients" },
     {
       label: "Appointments",
       icon: "📅",
