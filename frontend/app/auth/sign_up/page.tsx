@@ -8,10 +8,10 @@ import { useRouter } from "next/navigation";
 type Role = "PATIENT" | "DOCTOR" | "HOSPITAL";
 
 export default function SignupPage() {
-  const { auth_fetch } = useAuth();
+  const { auth_fetch, loading } = useAuth();
   const router = useRouter();
   const [role, set_role] = useState<Role>("PATIENT");
-  const [loading, set_loading] = useState(false);
+
   const [show_password, set_show_password] = useState(false);
   const [form, set_form] = useState({
     first_name: "",
@@ -38,7 +38,6 @@ export default function SignupPage() {
   };
 
   const handle_submit = async () => {
-    set_loading(true);
     const endpoint =
       role === "PATIENT"
         ? "/api/auth/patient_signup"
@@ -59,11 +58,10 @@ export default function SignupPage() {
         return;
       }
 
-      router.push(`/${role.toLowerCase()}/dashboard`);
+      router.push(`/dashboard/${role.toLowerCase()}`);
     } catch {
       alert("Something went wrong");
     } finally {
-      set_loading(false);
     }
   };
 

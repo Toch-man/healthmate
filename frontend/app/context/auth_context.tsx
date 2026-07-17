@@ -12,6 +12,8 @@ import { useRouter, usePathname } from "next/navigation";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
+const PUBLIC_PAGES = ["/", "/auth/login", "/auth/sign_up"];
+
 interface Patient {
   first_name: string;
   last_name: string;
@@ -60,7 +62,6 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   logout: () => Promise<void>;
-
   auth_fetch: (endpoint: string, options?: RequestInit) => Promise<Response>;
 }
 
@@ -69,9 +70,9 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
   const pathname = usePathname();
+
   const [user, set_user] = useState<User | null>(null);
   const [loading, set_loading] = useState(true);
-  const PUBLIC_PAGES = ["/", "/auth/login", "/auth/sign_up"];
 
   const logout = useCallback(async () => {
     try {
@@ -85,10 +86,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [router]);
 
-  // centralized fetch — auto refreshes token on 401
   const auth_fetch = useCallback(
     async (endpoint: string, options?: RequestInit): Promise<Response> => {
-      const res = await fetch(`${API_URL}${endpoint}`, {
+      let res = await fetch(`${API_URL}${endpoint}`, {
         ...options,
         credentials: "include",
         headers: {
@@ -97,41 +97,38 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         },
       });
 
-      if (res.status === 401) {
-        // try refresh
-        const refresh_res = await fetch(`${API_URL}/api/auth/refresh_token`, {
-          method: "POST",
-          credentials: "include",
-        });
-
-        if (refresh_res.ok) {
-          // retry original request with new token
-          return fetch(`${API_URL}${endpoint}`, {
-            ...options,
-            credentials: "include",
-            headers: {
-              "Content-Type": "application/json",
-              ...options?.headers,
-            },
-          });
-        } else {
-          // refresh failed — logout
-          logout();
-          set_user(null);
-
-          router.push("/auth/login");
-          return res;
-        }
+      if (res.status !== 401) {
+        return res;
       }
 
-      return res;
+      const refresh_res = await fetch(`${API_URL}/api/auth/refresh_token`, {
+        method: "POST",
+        credentials: "include",
+      });
+
+      if (!refresh_res.ok) {
+        await logout();
+        return res;
+      }
+
+      return fetch(`${API_URL}${endpoint}`, {
+        ...options,
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          ...options?.headers,
+        },
+      });
     },
-    [router, logout],
+    [logout],
   );
 
   const refresh_user = useCallback(async () => {
     try {
+      set_loading(true);
+
       const res = await auth_fetch("/api/auth/me");
+
       if (res.ok) {
         const data = await res.json();
         set_user(data.user);
@@ -140,28 +137,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     } catch {
       set_user(null);
+    } finally {
+      set_loading(false);
     }
   }, [auth_fetch]);
 
   useEffect(() => {
-    const init = async () => {
-      if (!PUBLIC_PAGES.includes(pathname) && !user && !loading) {
-        await refresh_user();
-        set_loading(false);
-      }
-    };
-    init();
-  }, []);
+    if (PUBLIC_PAGES.includes(pathname)) {
+      set_loading(false);
+      return;
+    }
 
-  // Redirect unauthenticated users away from protected pages
+    refresh_user();
+  }, [pathname, refresh_user]);
+
   useEffect(() => {
     if (!loading && !user && !PUBLIC_PAGES.includes(pathname)) {
       router.push("/auth/login");
     }
-  }, [user, loading, pathname, router]);
+  }, [loading, user, pathname, router]);
 
   return (
-    <AuthContext.Provider value={{ user, loading, logout, auth_fetch }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        logout,
+        auth_fetch,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -169,6 +173,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) throw new Error("useAuth must be used inside AuthProvider");
+
+  if (!context) {
+    throw new Error("useAuth must be used inside AuthProvider");
+  }
+
   return context;
 };

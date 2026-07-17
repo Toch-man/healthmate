@@ -10,9 +10,9 @@ import Dialog from "@/components/dialog";
 export default function LoginPage() {
   const router = useRouter();
   const [show_password, set_show_password] = useState(false);
-  const [loading, set_loading] = useState(false);
+
   const [form, set_form] = useState({ email: "", password: "" });
-  const { auth_fetch } = useAuth();
+  const { auth_fetch, loading } = useAuth();
   const [dialog, set_dialog] = useState<{
     open: boolean;
     type: "error" | "success" | "info";
@@ -31,7 +31,6 @@ export default function LoginPage() {
 
   const handle_submit = async (e: React.MouseEvent) => {
     e.preventDefault();
-    set_loading(true);
 
     try {
       const res = await auth_fetch(`/api/auth/login`, {
@@ -68,7 +67,6 @@ export default function LoginPage() {
     } catch (error) {
       alert("Something went wrong");
     } finally {
-      set_loading(false);
     }
   };
 
