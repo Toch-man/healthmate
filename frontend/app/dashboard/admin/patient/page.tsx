@@ -27,7 +27,7 @@ export default function AdminPatientsPage() {
   useEffect(() => {
     const fetch_patients = async () => {
       try {
-        const res = await auth_fetch(`${API_URL}/api/admin/users`);
+        const res = await auth_fetch(`/api/admin/users`);
         if (res.status === 401 || res.status === 403) {
           router.push("/auth/login");
           return;
