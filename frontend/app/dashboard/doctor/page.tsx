@@ -42,7 +42,7 @@ export default function DoctorDashboard() {
   useEffect(() => {
     const fetch_data = async () => {
       try {
-        const apt_res = await auth_fetch(`/api/appointment/doctor_profile`);
+        const apt_res = await auth_fetch(`/api/appointment/doctor`);
 
         const apt_data = await apt_res.json();
 
