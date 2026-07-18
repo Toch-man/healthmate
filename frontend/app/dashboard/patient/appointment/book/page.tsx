@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/app/context/auth_context";
+import Dialog from "@/components/dialog";
 
 interface Doctor {
   id: string;
@@ -20,6 +21,7 @@ interface Doctor {
 
 export default function BookAppointmentPage() {
   const router = useRouter();
+  const search_params = useSearchParams();
   const { auth_fetch } = useAuth();
   const [doctors, set_doctors] = useState<Doctor[]>([]);
   const [loading, set_loading] = useState(true);
@@ -27,6 +29,17 @@ export default function BookAppointmentPage() {
   const [selected_doctor, set_selected_doctor] = useState<Doctor | null>(null);
   const [search, set_search] = useState("");
   const [specialization_filter, set_specialization_filter] = useState("");
+  const [location_filter, set_location_filter] = useState("");
+  const [dialog, set_dialog] = useState<{
+    open: boolean;
+    type: "error" | "success" | "info";
+    message: string;
+    auto_close_ms?: number;
+  }>({
+    open: false,
+    type: "error",
+    message: "",
+  });
 
   const [form, set_form] = useState({
     reason: "",
@@ -40,28 +53,55 @@ export default function BookAppointmentPage() {
         const params = new URLSearchParams();
         if (specialization_filter)
           params.set("specialization", specialization_filter);
+        if (location_filter) params.set("location", location_filter);
 
-        const res = await auth_fetch(`/api/patient/doctors?$/d{params}`, {
-          credentials: "include",
-        });
-        if (res.status === 401) {
-          router.push("/auth/login");
+        const query = params.toString();
+        const res = await auth_fetch(
+          `/api/patient/doctors${query ? `?${query}` : ""}`,
+        );
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          set_dialog({
+            open: true,
+            type: "error",
+            message:
+              data.message || `Error ${res.status}: could not load doctors`,
+          });
           return;
         }
-        const data = await res.json();
-        set_doctors(data.data || []);
-      } catch {
-        router.push("/auth/login");
+
+        const fetched: Doctor[] = data.data || [];
+        set_doctors(fetched);
+
+        // pre-select doctor if arriving from a link like ?doctor_id=abc123
+        const doctor_id = search_params.get("doctor_id");
+        if (doctor_id) {
+          const match = fetched.find((d) => d.id === doctor_id);
+          if (match) set_selected_doctor(match);
+        }
+      } catch (err: any) {
+        set_dialog({
+          open: true,
+          type: "error",
+          message:
+            err?.message || "Network error. Please check your connection.",
+        });
       } finally {
         set_loading(false);
       }
     };
     fetch_doctors();
-  }, [specialization_filter]);
+  }, [specialization_filter, location_filter]);
 
   const handle_book = async () => {
     if (!selected_doctor || !form.reason) {
-      alert("Please select a doctor and provide a reason");
+      set_dialog({
+        open: true,
+        type: "error",
+        message: "Please select a doctor and provide a reason for the visit.",
+      });
       return;
     }
     set_booking(true);
@@ -70,18 +110,37 @@ export default function BookAppointmentPage() {
         `/api/appointments/book_appointment/${selected_doctor.id}`,
         {
           method: "POST",
-
           body: JSON.stringify(form),
         },
       );
       const data = await res.json();
+
       if (!res.ok) {
-        alert(data.message);
+        set_dialog({
+          open: true,
+          type: "error",
+          message:
+            data.message || `Error ${res.status}: could not book appointment`,
+        });
         return;
       }
-      router.push("/patient/appointment");
-    } catch {
-      alert("Something went wrong");
+
+      set_dialog({
+        open: true,
+        type: "success",
+        message: "Appointment booked! Redirecting...",
+        auto_close_ms: 1500,
+      });
+
+      setTimeout(() => {
+        router.push("/dashboard/patient/appointments");
+      }, 1500);
+    } catch (err: any) {
+      set_dialog({
+        open: true,
+        type: "error",
+        message: err?.message || "Something went wrong. Please try again.",
+      });
     } finally {
       set_booking(false);
     }
@@ -94,6 +153,7 @@ export default function BookAppointmentPage() {
   );
 
   const specializations = [...new Set(doctors.map((d) => d.specialization))];
+  const locations = [...new Set(doctors.map((d) => d.location))];
 
   const input_style = {
     width: "100%",
@@ -164,7 +224,11 @@ export default function BookAppointmentPage() {
               icon: "🔔",
               href: "/dashboard/patient/notifications",
             },
-            { label: "Profile", icon: "👤", href: "dashboard/patient/profile" },
+            {
+              label: "Profile",
+              icon: "👤",
+              href: "/dashboard/patient/profile",
+            },
           ].map((item: any) => (
             <Link
               key={item.label}
@@ -206,7 +270,7 @@ export default function BookAppointmentPage() {
           }}
         >
           <Link
-            href="/patient/appointments"
+            href="/dashboard/patient/appointments"
             style={{
               fontSize: 13,
               color: "#6b7280",
@@ -229,23 +293,42 @@ export default function BookAppointmentPage() {
         >
           {/* Doctor list */}
           <div style={{ padding: "1.5rem", overflowY: "auto" }}>
-            {/* Search + filter */}
-            <div style={{ display: "flex", gap: 10, marginBottom: "1.5rem" }}>
+            {/* Search + filters */}
+            <div
+              style={{
+                display: "flex",
+                gap: 10,
+                marginBottom: "1.5rem",
+                flexWrap: "wrap",
+              }}
+            >
               <input
                 value={search}
                 onChange={(e) => set_search(e.target.value)}
                 placeholder="Search doctors by name or specialization..."
-                style={{ ...input_style, flex: 1 }}
+                style={{ ...input_style, flex: "1 1 200px" }}
               />
               <select
                 value={specialization_filter}
                 onChange={(e) => set_specialization_filter(e.target.value)}
-                style={{ ...input_style, width: 180 }}
+                style={{ ...input_style, width: 170 }}
               >
                 <option value="">All specializations</option>
                 {specializations.map((s) => (
                   <option key={s} value={s}>
                     {s}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={location_filter}
+                onChange={(e) => set_location_filter(e.target.value)}
+                style={{ ...input_style, width: 170 }}
+              >
+                <option value="">All locations</option>
+                {locations.map((l) => (
+                  <option key={l} value={l}>
+                    {l}
                   </option>
                 ))}
               </select>
@@ -560,6 +643,14 @@ export default function BookAppointmentPage() {
           </div>
         </div>
       </div>
+
+      <Dialog
+        open={dialog.open}
+        type={dialog.type}
+        message={dialog.message}
+        auto_close_ms={dialog.auto_close_ms}
+        on_close={() => set_dialog((d) => ({ ...d, open: false }))}
+      />
     </div>
   );
 }

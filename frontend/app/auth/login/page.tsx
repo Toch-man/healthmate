@@ -12,7 +12,8 @@ export default function LoginPage() {
   const [show_password, set_show_password] = useState(false);
 
   const [form, set_form] = useState({ email: "", password: "" });
-  const { auth_fetch, loading } = useAuth();
+  const { auth_fetch } = useAuth();
+  const [submitting, set_submitting] = useState(false);
   const [dialog, set_dialog] = useState<{
     open: boolean;
     type: "error" | "success" | "info";
@@ -31,7 +32,7 @@ export default function LoginPage() {
 
   const handle_submit = async (e: React.MouseEvent) => {
     e.preventDefault();
-
+    set_submitting(true);
     try {
       const res = await auth_fetch(`/api/auth/login`, {
         method: "POST",
@@ -40,7 +41,7 @@ export default function LoginPage() {
       });
 
       const data = await res.json();
-
+      set_submitting(false);
       if (!res.ok) {
         set_dialog({
           open: true,
@@ -60,7 +61,16 @@ export default function LoginPage() {
 
       // redirect based on role
       if (data.user.role === "PATIENT") router.push("/dashboard/patient");
-      else if (data.user.role === "DOCTOR") router.push("/dashboard/doctor");
+      else if (
+        data.user.role === "DOCTOR" &&
+        data.user.doctor.status == "APPROVED"
+      )
+        router.push("/dashboard/doctor");
+      else if (
+        data.user.role === "DOCTOR" &&
+        data.user.doctor.status !== "APPROVED"
+      )
+        router.push("/dashboard/doctor/pending_approval");
       else if (data.user.role === "HOSPITAL")
         router.push("/dashboard/hospital");
       else if (data.user.role === "ADMIN") router.push("/dashboard/admin");
@@ -167,10 +177,10 @@ export default function LoginPage() {
             {/* Submit */}
             <button
               onClick={handle_submit}
-              disabled={loading}
+              disabled={submitting}
               className="w-full bg-[#1B2B6B] text-white py-2.5 rounded-lg text-sm font-medium hover:bg-[#162358] transition disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {loading ? "Signing in..." : "Sign in"}
+              {submitting ? "Signing in..." : "Sign in"}
             </button>
 
             {/* Divider */}

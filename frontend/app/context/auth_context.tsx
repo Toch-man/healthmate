@@ -88,6 +88,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const auth_fetch = useCallback(
     async (endpoint: string, options?: RequestInit): Promise<Response> => {
+      set_loading(true);
       let res = await fetch(`${API_URL}${endpoint}`, {
         ...options,
         credentials: "include",
@@ -97,65 +98,60 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         },
       });
 
-      if (res.status !== 401) {
+      if (res.status == 401) {
+        const refresh_res = await fetch(`${API_URL}/api/auth/refresh_token`, {
+          method: "POST",
+          credentials: "include",
+        });
+
+        if (!refresh_res.ok) {
+          await logout();
+          return res;
+        }
+        return fetch(`${API_URL}${endpoint}`, {
+          ...options,
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            ...options?.headers,
+          },
+        });
+      } else {
         return res;
       }
-
-      const refresh_res = await fetch(`${API_URL}/api/auth/refresh_token`, {
-        method: "POST",
-        credentials: "include",
-      });
-
-      if (!refresh_res.ok) {
-        await logout();
-        return res;
-      }
-
-      return fetch(`${API_URL}${endpoint}`, {
-        ...options,
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-          ...options?.headers,
-        },
-      });
     },
     [logout],
   );
 
   const refresh_user = useCallback(async () => {
     try {
-      set_loading(true);
-
       const res = await auth_fetch("/api/auth/me");
-
+      const data = await res.json();
       if (res.ok) {
-        const data = await res.json();
         set_user(data.user);
       } else {
         set_user(null);
       }
-    } catch {
-      set_user(null);
-    } finally {
-      set_loading(false);
+    } catch (err) {
+      console.log(err);
     }
   }, [auth_fetch]);
 
   useEffect(() => {
-    if (PUBLIC_PAGES.includes(pathname)) {
+    const auth = async () => {
+      if (!PUBLIC_PAGES.includes(pathname) && !user) {
+        await refresh_user();
+      }
       set_loading(false);
-      return;
-    }
-
-    refresh_user();
-  }, [pathname, refresh_user]);
+    };
+    auth();
+  }, [pathname, user, refresh_user]);
 
   useEffect(() => {
     if (!loading && !user && !PUBLIC_PAGES.includes(pathname)) {
       router.push("/auth/login");
     }
-  }, [loading, user, pathname, router]);
+  }, [loading, user, pathname]);
 
   return (
     <AuthContext.Provider
