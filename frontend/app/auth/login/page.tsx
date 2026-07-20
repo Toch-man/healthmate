@@ -41,7 +41,7 @@ export default function LoginPage() {
       });
 
       const data = await res.json();
-      set_submitting(false);
+
       if (!res.ok) {
         set_dialog({
           open: true,
@@ -56,8 +56,6 @@ export default function LoginPage() {
         message: "Logged in successfully! Redirecting...",
         auto_close_ms: 1500,
       });
-
-      // separately, trigger the redirect when it closes:
 
       // redirect based on role
       if (data.user.role === "PATIENT") router.push("/dashboard/patient");
@@ -77,6 +75,7 @@ export default function LoginPage() {
     } catch (error) {
       alert("Something went wrong");
     } finally {
+      set_submitting(false);
     }
   };
 

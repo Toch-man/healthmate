@@ -8,10 +8,10 @@ import { useRouter } from "next/navigation";
 type Role = "PATIENT" | "DOCTOR" | "HOSPITAL";
 
 export default function SignupPage() {
-  const { auth_fetch, loading } = useAuth();
+  const { auth_fetch } = useAuth();
   const router = useRouter();
   const [role, set_role] = useState<Role>("PATIENT");
-
+  const [loading, set_loading] = useState(false);
   const [show_password, set_show_password] = useState(false);
   const [form, set_form] = useState({
     first_name: "",
@@ -46,6 +46,7 @@ export default function SignupPage() {
           : "/api/auth/hospital_signup";
 
     try {
+      set_loading(true);
       const res = await auth_fetch(`${endpoint}`, {
         method: "POST",
         credentials: "include",
@@ -62,6 +63,7 @@ export default function SignupPage() {
     } catch {
       alert("Something went wrong");
     } finally {
+      set_loading(false);
     }
   };
 
