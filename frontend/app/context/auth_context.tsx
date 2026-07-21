@@ -63,6 +63,7 @@ interface AuthContextType {
   loading: boolean;
   logout: () => Promise<void>;
   auth_fetch: (endpoint: string, options?: RequestInit) => Promise<Response>;
+  set_user: (user: User | null) => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -139,6 +140,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const auth = async () => {
       if (!PUBLIC_PAGES.includes(pathname) && !user) {
+        set_loading(true);
         await refresh_user();
       }
       set_loading(false);
@@ -159,6 +161,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         loading,
         logout,
         auth_fetch,
+        set_user,
       }}
     >
       {children}

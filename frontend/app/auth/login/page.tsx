@@ -12,7 +12,7 @@ export default function LoginPage() {
   const [show_password, set_show_password] = useState(false);
 
   const [form, set_form] = useState({ email: "", password: "" });
-  const { auth_fetch } = useAuth();
+  const { auth_fetch, set_user } = useAuth();
   const [submitting, set_submitting] = useState(false);
   const [dialog, set_dialog] = useState<{
     open: boolean;
@@ -56,6 +56,7 @@ export default function LoginPage() {
         message: "Logged in successfully! Redirecting...",
         auto_close_ms: 1500,
       });
+      set_user(data.user);
 
       // redirect based on role
       if (data.user.role === "PATIENT") router.push("/dashboard/patient");
