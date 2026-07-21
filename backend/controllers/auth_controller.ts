@@ -80,6 +80,7 @@ export const log_in = async (req: Request, res: Response) => {
       },
     });
   } catch (error) {
+    console.error("LOGIN  ERROR:", error);
     return res.status(500).json({
       success: false,
       message: "something went wrong",
@@ -553,6 +554,7 @@ export const refresh_token = async (req: Request, res: Response) => {
       message: "tokens refreshed",
     });
   } catch (error) {
+    console.error("REFRESH TOKEN ERROR:", error);
     return res.status(500).json({
       success: false,
       message: "something went wrong",

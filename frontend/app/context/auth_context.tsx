@@ -88,7 +88,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const auth_fetch = useCallback(
     async (endpoint: string, options?: RequestInit): Promise<Response> => {
-      set_loading(true);
       let res = await fetch(`${API_URL}${endpoint}`, {
         ...options,
         credentials: "include",
