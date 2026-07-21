@@ -82,6 +82,7 @@ export const chat = async (req: Request, res: Response) => {
       message: gemini_reply,
     });
   } catch (error) {
+    console.error(error);
     return res.status(500).json({
       success: false,
       message: "something went wrong",
