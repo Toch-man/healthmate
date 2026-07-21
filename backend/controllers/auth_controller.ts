@@ -521,18 +521,16 @@ export const refresh_token = async (req: Request, res: Response) => {
     );
 
     // delete old refresh token from DB
-    await prisma.refresh_token.delete({
-      where: { token: refresh_token },
-    });
-
-    // save new refresh token to DB
-    await prisma.refresh_token.create({
-      data: {
-        token: new_refresh_token,
-        user_id: user.id,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      },
-    });
+    await prisma.$transaction([
+      prisma.refresh_token.delete({ where: { token: refresh_token } }),
+      prisma.refresh_token.create({
+        data: {
+          token: new_refresh_token,
+          user_id: user.id,
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        },
+      }),
+    ]);
 
     // send both new cookies
     res.cookie("access_token", new_access_token, {

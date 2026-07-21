@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/app/context/auth_context";
 import Dialog from "@/components/dialog";
-
+import { Suspense } from "react";
 interface Doctor {
   id: string;
   first_name: string;
@@ -19,7 +19,7 @@ interface Doctor {
   hospital: { name: string; address: string } | null;
 }
 
-export default function BookAppointmentPage() {
+function BookAppointmentContent() {
   const router = useRouter();
   const search_params = useSearchParams();
   const { auth_fetch } = useAuth();
@@ -652,5 +652,27 @@ export default function BookAppointmentPage() {
         on_close={() => set_dialog((d) => ({ ...d, open: false }))}
       />
     </div>
+  );
+}
+
+export default function BookAppointmentPage() {
+  return (
+    <Suspense
+      fallback={
+        <div
+          style={{
+            minHeight: "100vh",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontFamily: "Inter, sans-serif",
+          }}
+        >
+          <div style={{ fontSize: 13, color: "#6b7280" }}>Loading...</div>
+        </div>
+      }
+    >
+      <BookAppointmentContent />
+    </Suspense>
   );
 }
