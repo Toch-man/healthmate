@@ -7,6 +7,7 @@ import {
   get_specialization,
   SYSTEM_PROMPT,
 } from "../config/diagnosis_helpers.ts";
+import { find_patient } from "../services/patient_service.ts";
 
 const genai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 const gemini = genai.getGenerativeModel({
@@ -17,7 +18,6 @@ const gemini = genai.getGenerativeModel({
 const conversation: Record<string, any[]> = {};
 
 // pulls saved messages from DB into memory if this patient's history isn't cached
-// (handles server restarts, since in-memory alone is wiped then)
 async function load_history(patient_id: string) {
   if (conversation[patient_id]) return conversation[patient_id];
 
@@ -36,7 +36,7 @@ async function load_history(patient_id: string) {
 
 export const chat = async (req: Request, res: Response) => {
   try {
-    const patient_id = req.user?.id;
+    const user_id = req.user?.id;
     const { message } = req.body;
 
     if (!message) {
@@ -46,7 +46,18 @@ export const chat = async (req: Request, res: Response) => {
       });
     }
 
-    const history = await load_history(patient_id!);
+    // resolve the actual Patient record — req.user.id is the User.id,
+    // not the Patient.id that ChatMessage/HealthRecord foreign keys need
+    const patient = await find_patient(user_id!);
+    if (!patient) {
+      return res.status(404).json({
+        success: false,
+        message: "patient not found",
+      });
+    }
+    const patient_id = patient.id;
+
+    const history = await load_history(patient_id);
 
     const chat_session = gemini.startChat({
       history: [
@@ -64,17 +75,17 @@ export const chat = async (req: Request, res: Response) => {
 
     // persist the patient's message
     await prisma.chatMessage.create({
-      data: { patient_id: patient_id!, role: "user", content: message },
+      data: { patient_id, role: "user", content: message },
     });
     history.push({ role: "user", parts: [{ text: message }] });
 
     if (gemini_reply.includes("DIAGNOSIS_READY")) {
-      return await run_diagnosis(patient_id!, gemini_reply, res);
+      return await run_diagnosis(patient_id, gemini_reply, res);
     }
 
     // persist gemini's follow-up question
     await prisma.chatMessage.create({
-      data: { patient_id: patient_id!, role: "model", content: gemini_reply },
+      data: { patient_id, role: "model", content: gemini_reply },
     });
     history.push({ role: "model", parts: [{ text: gemini_reply }] });
 
@@ -84,7 +95,7 @@ export const chat = async (req: Request, res: Response) => {
       message: gemini_reply,
     });
   } catch (error) {
-    console.error(error);
+    console.error("DIAGNOSIS CHAT ERROR:", error);
     return res.status(500).json({
       success: false,
       message: "something went wrong",
@@ -95,10 +106,18 @@ export const chat = async (req: Request, res: Response) => {
 // GET /api/diagnosis/history — rehydrates the chat on page load/refresh
 export const get_history = async (req: Request, res: Response) => {
   try {
-    const patient_id = req.user?.id;
+    const user_id = req.user?.id;
+
+    const patient = await find_patient(user_id!);
+    if (!patient) {
+      return res.status(404).json({
+        success: false,
+        message: "patient not found",
+      });
+    }
 
     const messages = await prisma.chatMessage.findMany({
-      where: { patient_id },
+      where: { patient_id: patient.id },
       orderBy: { createdAt: "asc" },
     });
 
@@ -112,6 +131,7 @@ export const get_history = async (req: Request, res: Response) => {
       })),
     });
   } catch (error) {
+    console.error("DIAGNOSIS HISTORY ERROR:", error);
     return res.status(500).json({
       success: false,
       message: "could not load chat history",
@@ -119,6 +139,8 @@ export const get_history = async (req: Request, res: Response) => {
   }
 };
 
+// RUN DIAGNOSIS — called when gemini is done
+// NOTE: patient_id passed in here is already the resolved Patient.id
 export const run_diagnosis = async (
   patient_id: string,
   gemini_reply: string,
@@ -219,6 +241,7 @@ export const run_diagnosis = async (
       },
     });
   } catch (error) {
+    console.error("DIAGNOSIS RUN ERROR:", error);
     return res.status(500).json({
       success: false,
       message: "something went wrong during diagnosis",
