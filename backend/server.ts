@@ -1,3 +1,4 @@
+import "./polyfills.ts";
 import "dotenv/config";
 import { createServer } from "http";
 import { init_socket } from "./src/socket.ts";
