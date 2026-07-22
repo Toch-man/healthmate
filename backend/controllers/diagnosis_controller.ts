@@ -9,7 +9,9 @@ import {
 } from "../config/diagnosis_helpers.ts";
 
 const genai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-const gemini = genai.getGenerativeModel({ model: "gemini-2.5-flash" });
+const gemini = genai.getGenerativeModel({
+  model: `${process.env.GEMINI_MODEL}`,
+});
 
 // in-memory cache of gemini-format history, backed by the database
 const conversation: Record<string, any[]> = {};
