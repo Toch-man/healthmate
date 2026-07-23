@@ -29,6 +29,7 @@ interface DiagnosisResult {
     rating: number;
     yearsExperience: number;
   }[];
+  recommended_doctors_message: string | null;
   recommended_hospitals: {
     id: string;
     name: string;
@@ -36,6 +37,7 @@ interface DiagnosisResult {
     state: string;
     phone: string;
   }[];
+  recommended_hospitals_message: string | null;
 }
 
 const DEFAULT_GREETING: Message = {
@@ -53,6 +55,7 @@ export default function SymptomCheckPage() {
   const [input, set_input] = useState("");
   const [loading, set_loading] = useState(false);
   const [history_loading, set_history_loading] = useState(true);
+  const [starting_new, set_starting_new] = useState(false);
   const [result, set_result] = useState<DiagnosisResult | null>(null);
   const bottom_ref = useRef<HTMLDivElement>(null);
   const [dialog, set_dialog] = useState<{
@@ -66,7 +69,6 @@ export default function SymptomCheckPage() {
     message: "",
   });
 
-  // rehydrate chat history on mount so a refresh doesn't wipe the conversation
   useEffect(() => {
     const load_history = async () => {
       try {
@@ -83,7 +85,6 @@ export default function SymptomCheckPage() {
             })),
           );
         }
-        // if no saved history, keep the default greeting already in state
       } catch {
         // silently keep default greeting — not worth a dialog for this
       } finally {
@@ -180,6 +181,37 @@ export default function SymptomCheckPage() {
       });
     } finally {
       set_loading(false);
+    }
+  };
+
+  // calls the backend to actually clear conversation history,
+  // then resets local UI state to match
+  const start_new_chat = async () => {
+    set_starting_new(true);
+    try {
+      const res = await auth_fetch("/api/diagnosis/new", { method: "POST" });
+      const data = await res.json();
+
+      if (!res.ok) {
+        set_dialog({
+          open: true,
+          type: "error",
+          message:
+            data.message || "Could not start a new chat. Please try again.",
+        });
+        return;
+      }
+
+      set_result(null);
+      set_messages([DEFAULT_GREETING]);
+    } catch (err: any) {
+      set_dialog({
+        open: true,
+        type: "error",
+        message: err?.message || "Network error. Please check your connection.",
+      });
+    } finally {
+      set_starting_new(false);
     }
   };
 
@@ -304,16 +336,34 @@ export default function SymptomCheckPage() {
               Describe how you're feeling and get an AI assessment
             </div>
           </div>
-          <Link
-            href="/dashboard/patient/records"
-            style={{
-              fontSize: 13,
-              color: "#1B2B6B",
-              textDecoration: "none",
-            }}
-          >
-            View past checks →
-          </Link>
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <button
+              onClick={start_new_chat}
+              disabled={starting_new}
+              style={{
+                fontSize: 13,
+                color: "#1B2B6B",
+                background: "none",
+                border: "none",
+                cursor: starting_new ? "not-allowed" : "pointer",
+                opacity: starting_new ? 0.6 : 1,
+                fontFamily: "Inter, sans-serif",
+                padding: 0,
+              }}
+            >
+              {starting_new ? "Starting..." : "+ New chat"}
+            </button>
+            <Link
+              href="/dashboard/patient/records"
+              style={{
+                fontSize: 13,
+                color: "#1B2B6B",
+                textDecoration: "none",
+              }}
+            >
+              View past checks →
+            </Link>
+          </div>
         </div>
 
         <div
@@ -691,13 +741,13 @@ export default function SymptomCheckPage() {
               )}
 
               {/* Recommended doctors */}
-              {result.recommended_doctors?.length > 0 && (
-                <div style={{ marginBottom: "1rem" }}>
-                  <div
-                    style={{ fontSize: 12, color: "#6b7280", marginBottom: 6 }}
-                  >
-                    Recommended doctors
-                  </div>
+              <div style={{ marginBottom: "1rem" }}>
+                <div
+                  style={{ fontSize: 12, color: "#6b7280", marginBottom: 6 }}
+                >
+                  Recommended doctors
+                </div>
+                {result.recommended_doctors?.length > 0 ? (
                   <div
                     style={{ display: "flex", flexDirection: "column", gap: 8 }}
                   >
@@ -724,17 +774,30 @@ export default function SymptomCheckPage() {
                       </Link>
                     ))}
                   </div>
-                </div>
-              )}
+                ) : (
+                  <div
+                    style={{
+                      fontSize: 12,
+                      color: "#9ca3af",
+                      padding: "10px",
+                      background: "#f9fafb",
+                      borderRadius: 8,
+                    }}
+                  >
+                    {result.recommended_doctors_message ||
+                      "No doctors available right now."}
+                  </div>
+                )}
+              </div>
 
               {/* Recommended hospitals */}
-              {result.recommended_hospitals?.length > 0 && (
-                <div style={{ marginBottom: "1rem" }}>
-                  <div
-                    style={{ fontSize: 12, color: "#6b7280", marginBottom: 6 }}
-                  >
-                    Nearby hospitals
-                  </div>
+              <div style={{ marginBottom: "1rem" }}>
+                <div
+                  style={{ fontSize: 12, color: "#6b7280", marginBottom: 6 }}
+                >
+                  Nearby hospitals
+                </div>
+                {result.recommended_hospitals?.length > 0 ? (
                   <div
                     style={{ display: "flex", flexDirection: "column", gap: 8 }}
                   >
@@ -756,14 +819,25 @@ export default function SymptomCheckPage() {
                       </div>
                     ))}
                   </div>
-                </div>
-              )}
+                ) : (
+                  <div
+                    style={{
+                      fontSize: 12,
+                      color: "#9ca3af",
+                      padding: "10px",
+                      background: "#f9fafb",
+                      borderRadius: 8,
+                    }}
+                  >
+                    {result.recommended_hospitals_message ||
+                      "No hospitals available right now."}
+                  </div>
+                )}
+              </div>
 
               <button
-                onClick={() => {
-                  set_result(null);
-                  set_messages([DEFAULT_GREETING]);
-                }}
+                onClick={start_new_chat}
+                disabled={starting_new}
                 style={{
                   width: "100%",
                   padding: "8px",
@@ -772,10 +846,11 @@ export default function SymptomCheckPage() {
                   fontSize: 12,
                   color: "#6b7280",
                   background: "#fff",
-                  cursor: "pointer",
+                  cursor: starting_new ? "not-allowed" : "pointer",
+                  opacity: starting_new ? 0.6 : 1,
                 }}
               >
-                Start new check
+                {starting_new ? "Starting..." : "Start new check"}
               </button>
             </div>
           )}

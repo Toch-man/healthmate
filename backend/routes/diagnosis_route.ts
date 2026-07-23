@@ -18,4 +18,11 @@ router.get(
   diagnosis.get_history,
 );
 
+router.post(
+  "/diagnosis/new",
+  authenticate,
+  role_allowed("PATIENT"),
+  diagnosis.start_new_conversation,
+);
+
 export default router;

@@ -14,10 +14,8 @@ const gemini = genai.getGenerativeModel({
   model: `${process.env.GEMINI_MODEL}`,
 });
 
-// in-memory cache of gemini-format history, backed by the database
 const conversation: Record<string, any[]> = {};
 
-// pulls saved messages from DB into memory if this patient's history isn't cached
 async function load_history(patient_id: string) {
   if (conversation[patient_id]) return conversation[patient_id];
 
@@ -46,8 +44,6 @@ export const chat = async (req: Request, res: Response) => {
       });
     }
 
-    // resolve the actual Patient record — req.user.id is the User.id,
-    // not the Patient.id that ChatMessage/HealthRecord foreign keys need
     const patient = await find_patient(user_id!);
     if (!patient) {
       return res.status(404).json({
@@ -73,7 +69,6 @@ export const chat = async (req: Request, res: Response) => {
     const result = await chat_session.sendMessage(message);
     const gemini_reply = result.response.text();
 
-    // persist the patient's message
     await prisma.chatMessage.create({
       data: { patient_id, role: "user", content: message },
     });
@@ -83,7 +78,6 @@ export const chat = async (req: Request, res: Response) => {
       return await run_diagnosis(patient_id, gemini_reply, res);
     }
 
-    // persist gemini's follow-up question
     await prisma.chatMessage.create({
       data: { patient_id, role: "model", content: gemini_reply },
     });
@@ -103,7 +97,6 @@ export const chat = async (req: Request, res: Response) => {
   }
 };
 
-// GET /api/diagnosis/history — rehydrates the chat on page load/refresh
 export const get_history = async (req: Request, res: Response) => {
   try {
     const user_id = req.user?.id;
@@ -139,8 +132,38 @@ export const get_history = async (req: Request, res: Response) => {
   }
 };
 
-// RUN DIAGNOSIS — called when gemini is done
-// NOTE: patient_id passed in here is already the resolved Patient.id
+// POST /api/diagnosis/new — explicitly clears conversation so the
+// patient can start a completely fresh symptom check, unrelated to
+// any previous diagnosis. Triggered only by the "Start new chat"
+// button, never automatically.
+export const start_new_conversation = async (req: Request, res: Response) => {
+  try {
+    const user_id = req.user?.id;
+
+    const patient = await find_patient(user_id!);
+    if (!patient) {
+      return res.status(404).json({
+        success: false,
+        message: "patient not found",
+      });
+    }
+
+    delete conversation[patient.id];
+    await prisma.chatMessage.deleteMany({ where: { patient_id: patient.id } });
+
+    return res.status(200).json({
+      success: true,
+      message: "started a new conversation",
+    });
+  } catch (error) {
+    console.error("START NEW CONVERSATION ERROR:", error);
+    return res.status(500).json({
+      success: false,
+      message: "something went wrong",
+    });
+  }
+};
+
 export const run_diagnosis = async (
   patient_id: string,
   gemini_reply: string,
@@ -222,9 +245,9 @@ export const run_diagnosis = async (
       },
     });
 
-    // session complete — clear both memory cache and persisted chat history
-    delete conversation[patient_id];
-    await prisma.chatMessage.deleteMany({ where: { patient_id } });
+    // conversation intentionally NOT cleared here — patient can keep
+    // chatting with full context; they clear it themselves via the
+    // "Start new chat" button, which calls start_new_conversation above
 
     return res.status(200).json({
       success: true,
@@ -237,7 +260,15 @@ export const run_diagnosis = async (
         warningSignss: top.precautions,
         symptoms,
         recommended_doctors: doctors,
+        recommended_doctors_message:
+          doctors.length === 0
+            ? `No ${specialization}s are available on HealthMate right now. Please check back later or visit the nearest hospital.`
+            : null,
         recommended_hospitals: hospitals,
+        recommended_hospitals_message:
+          hospitals.length === 0
+            ? "No approved hospitals are listed on HealthMate right now."
+            : null,
       },
     });
   } catch (error) {
